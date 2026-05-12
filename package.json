@@ -5,8 +5,12 @@
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "vite",
-    "build": "tsc && vite build && electron-builder",
+    "build": "tsc && vite build && electron-builder --win",
+    "build:dir": "tsc && vite build && electron-builder --win --dir",
     "preview": "vite preview"
+  },
+  "build": {
+    "extends": "electron-builder.yml"
   },
   "dependencies": {
     "react": "^18.2.0",

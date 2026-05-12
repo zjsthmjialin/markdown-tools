@@ -1,19 +1,38 @@
 appId: com.markany.app
 productName: MarkAny
+copyright: Copyright © 2026
+
 directories:
   output: release
   buildResources: build
+
 files:
-  - dist
-  - dist-electron
+  - dist/**/*
+  - dist-electron/**/*
+  - python/**/*
+  - "!python/**/*.pyc"
+  - "!**/__pycache__"
+
+extraResources:
+  - from: python/
+    to: python/
+    filter:
+      - "**/*"
+
 win:
   target:
     - target: nsis
       arch:
         - x64
-  artifactName: ${productName}-${version}-Setup.${ext}
+  artifactName: ${productName}-Setup-${version}.${ext}
+
 nsis:
   oneClick: false
   perMachine: false
   allowToChangeInstallationDirectory: true
   deleteAppDataOnUninstall: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  shortcutName: MarkAny
+
+asar: true
