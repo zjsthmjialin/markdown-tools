@@ -57,3 +57,132 @@
   color: #4a9eff;
   text-decoration: underline;
 }
+
+.file-list {
+  width: 500px;
+  margin-top: 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.file-list-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: #222;
+  border-bottom: 1px solid #333;
+}
+
+.file-list-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.file-count {
+  font-size: 14px;
+  color: #888;
+}
+
+.file-items {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.file-item {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px;
+  gap: 12px;
+  border-bottom: 1px solid #2a2a2a;
+  transition: background 0.15s ease;
+}
+
+.file-item:last-child {
+  border-bottom: none;
+}
+
+.file-item:hover {
+  background: #222;
+}
+
+.file-icon {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.file-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.file-name {
+  font-size: 14px;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-meta {
+  font-size: 12px;
+  color: #888;
+  margin-top: 2px;
+}
+
+.file-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #888;
+}
+
+.status-dot.pending {
+  background: #888;
+}
+
+.status-dot.processing {
+  background: #4a9eff;
+  animation: pulse 1s infinite;
+}
+
+.status-dot.completed {
+  background: #4caf50;
+}
+
+.status-dot.error {
+  background: #f44336;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+.file-remove {
+  background: none;
+  border: none;
+  color: #666;
+  font-size: 16px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.file-remove:hover {
+  background: #333;
+  color: #fff;
+}
