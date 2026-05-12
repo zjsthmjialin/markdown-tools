@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MarkAny - 文档转换工具</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-primary: #0f0f0f;
+            --bg-secondary: #1a1a1a;
+            --bg-tertiary: #252525;
+            --bg-hover: #2a2a2a;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --text-muted: #666666;
+            --accent: #6366f1;
+            --accent-light: #818cf8;
+            --accent-dark: #4f46e5;
+            --accent-glow: rgba(99, 102, 241, 0.3);
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --border: rgba(255, 255, 255, 0.08);
+            --border-light: rgba(255, 255, 255, 0.12);
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            opacity: 0.15;
+        }
+
+        .bg-orb-1 {
+            width: 600px;
+            height: 600px;
+            background: var(--accent);
+            top: -200px;
+            right: -100px;
+            animation: float 20s ease-in-out infinite;
+        }
+
+        .bg-orb-2 {
+            width: 400px;
+            height: 400px;
+            background: #8b5cf6;
+            bottom: -150px;
+            left: -100px;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33% { transform: translate(30px, -30px) scale(1.05); }
+            66% { transform: translate(-20px, 20px) scale(0.95); }
+        }
+
+        /* 主容器 */
+        .app-container {
+            position: relative;
+            z-index: 1;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo {
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+
+        .logo-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 4px 20px var(--accent-glow);
+        }
+
+        .logo-text {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            background: linear-gradient(135deg, var(--accent), var(--accent-light));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 15px;
+            font-weight: 400;
+        }
+
+        /* 主卡片 */
+        .main-card {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 32px;
+            box-shadow: var(--shadow);
+        }
+
+        /* 转换方向选择 */
+        .direction-section {
+            display: flex;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .direction-group {
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .direction-label {
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .select-wrapper {
+            position: relative;
+        }
+
+        .select-wrapper select {
+            width: 100%;
+            padding: 12px 40px 12px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: inherit;
+            cursor: pointer;
+            appearance: none;
+            transition: all 0.2s ease;
+        }
+
+        .select-wrapper select:hover {
+            border-color: var(--border-light);
+            background: var(--bg-hover);
+        }
+
+        .select-wrapper select:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px var(--accent-glow);
+        }
+
+        .select-wrapper::after {
+            content: '';
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-top: 5px solid var(--text-secondary);
+            pointer-events: none;
+        }
+
+        .direction-arrow {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--accent);
+            font-size: 20px;
+            padding: 0 8px;
+            align-self: flex-end;
+            margin-bottom: 12px;
+        }
+
+        /* 拖放区域 */
+        .drop-zone {
+            border: 2px dashed var(--border-light);
+            border-radius: var(--radius-md);
+            padding: 48px 32px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .drop-zone::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, var(--accent-glow), transparent);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .drop-zone:hover::before,
+        .drop-zone.dragover::before {
+            opacity: 1;
+        }
+
+        .drop-zone-content {
+            position: relative;
+            z-index: 1;
+        }
+
+        .drop-icon {
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 16px;
+            background: var(--bg-tertiary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            transition: all 0.3s ease;
+        }
+
+        .drop-zone:hover .drop-icon {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+
+        .drop-title {
+            font-size: 16px;
+            font-weight: 500;
+            margin-bottom: 8px;
+        }
+
+        .drop-subtitle {
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .drop-subtitle span {
+            color: var(--accent-light);
+            cursor: pointer;
+        }
+
+        .drop-subtitle span:hover {
+            text-decoration: underline;
+        }
+
+        /* 文件列表 */
+        .file-list {
+            margin-top: 24px;
+        }
+
+        .file-list-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+        }
+
+        .file-list-title {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .file-count {
+            font-size: 12px;
+            color: var(--text-muted);
+            background: var(--bg-tertiary);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .file-items {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            background: var(--bg-tertiary);
+            border-radius: var(--radius-sm);
+            transition: all 0.2s ease;
+        }
+
+        .file-item:hover {
+            background: var(--bg-hover);
+        }
+
+        .file-icon {
+            width: 36px;
+            height: 36px;
+            background: var(--bg-secondary);
+            border-radius: var(--radius-sm);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .file-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .file-name {
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .file-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        .status-dot.pending {
+            background: var(--warning);
+        }
+
+        .status-dot.success {
+            background: var(--success);
+        }
+
+        .status-dot.processing {
+            background: var(--accent);
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+
+        .file-remove {
+            width: 28px;
+            height: 28px;
+            background: transparent;
+            border: none;
+            border-radius: var(--radius-sm);
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .file-remove:hover {
+            background: var(--error);
+            color: white;
+        }
+
+        /* 底部操作栏 */
+        .action-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .output-path {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex: 1;
+            min-width: 200px;
+        }
+
+        .output-label {
+            font-size: 13px;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        .output-input {
+            flex: 1;
+            padding: 10px 14px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .output-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
+        .btn-browse {
+            padding: 10px 16px;
+            background: var(--bg-tertiary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-primary);
+            font-size: 13px;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .btn-browse:hover {
+            background: var(--bg-hover);
+            border-color: var(--border-light);
+        }
+
+        .btn-primary {
+            padding: 12px 32px;
+            background: linear-gradient(135deg, var(--accent), var(--accent-dark));
+            border: none;
+            border-radius: var(--radius-sm);
+            color: white;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px var(--accent-glow);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px var(--accent-glow);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* 进度条 */
+        .progress-section {
+            margin-top: 20px;
+            display: none;
+        }
+
+        .progress-section.active {
+            display: block;
+        }
+
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-secondary);
+            margin-bottom: 8px;
+        }
+
+        .progress-bar {
+            height: 6px;
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent-light));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+
+        /* 提示信息 */
+        .tip {
+            margin-top: 24px;
+            padding: 16px;
+            background: rgba(99, 102, 241, 0.1);
+            border: 1px solid rgba(99, 102, 241, 0.2);
+            border-radius: var(--radius-sm);
+            font-size: 13px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+        }
+
+        .tip-icon {
+            font-size: 16px;
+            flex-shrink: 0;
+        }
+
+        /* 响应式 */
+        @media (max-width: 600px) {
+            .app-container {
+                padding: 20px 16px;
+            }
+
+            .main-card {
+                padding: 24px 20px;
+            }
+
+            .direction-section {
+                flex-direction: column;
+            }
+
+            .direction-arrow {
+                transform: rotate(90deg);
+                align-self: center;
+                margin: 8px 0;
+            }
+
+            .action-bar {
+                flex-direction: column;
+            }
+
+            .output-path {
+                width: 100%;
+            }
+
+            .btn-primary {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景装饰 -->
+    <div class="bg-decoration">
+        <div class="bg-orb bg-orb-1"></div>
+        <div class="bg-orb bg-orb-2"></div>
+    </div>
+
+    <div class="app-container">
+        <!-- 头部 -->
+        <header class="header">
+            <div class="logo">
+                <div class="logo-icon">📄</div>
+                <div class="logo-text">Mark<span>Any</span></div>
+            </div>
+            <p class="tagline">支持 PDF、Word、Excel、PPT、HTML 等格式的双向转换工具</p>
+        </header>
+
+        <!-- 主卡片 -->
+        <div class="main-card">
+            <!-- 转换方向 -->
+            <div class="direction-section">
+                <div class="direction-group">
+                    <div class="direction-label">源格式</div>
+                    <div class="select-wrapper">
+                        <select id="sourceFormat">
+                            <option value="auto">自动检测</option>
+                            <option value="pdf">PDF 文档</option>
+                            <option value="docx">Word 文档</option>
+                            <option value="xlsx">Excel 表格</option>
+                            <option value="pptx">PowerPoint</option>
+                            <option value="html">HTML 网页</option>
+                            <option value="txt">纯文本</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="direction-arrow">→</div>
+
+                <div class="direction-group">
+                    <div class="direction-label">目标格式</div>
+                    <div class="select-wrapper">
+                        <select id="targetFormat">
+                            <option value="md">Markdown</option>
+                            <option value="pdf">PDF 文档</option>
+                            <option value="docx">Word 文档</option>
+                            <option value="html">HTML 网页</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 拖放区域 -->
+            <div class="drop-zone" id="dropZone">
+                <div class="drop-zone-content">
+                    <div class="drop-icon">📁</div>
+                    <div class="drop-title">拖放文件到此处</div>
+                    <div class="drop-subtitle">或<span>点击选择文件</span> · 支持批量选择</div>
+                </div>
+            </div>
+
+            <!-- 文件列表 -->
+            <div class="file-list" id="fileList">
+                <div class="file-list-header">
+                    <span class="file-list-title">待转换文件</span>
+                    <span class="file-count" id="fileCount">3 个文件</span>
+                </div>
+                <div class="file-items">
+                    <div class="file-item">
+                        <div class="file-icon">📕</div>
+                        <div class="file-info">
+                            <div class="file-name">2024年度报告.pdf</div>
+                            <div class="file-meta">2.4 MB · PDF 文档</div>
+                        </div>
+                        <div class="file-status">
+                            <span class="status-dot success"></span>
+                            已完成
+                        </div>
+                        <button class="file-remove">✕</button>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon">📗</div>
+                        <div class="file-info">
+                            <div class="file-name">产品需求文档.docx</div>
+                            <div class="file-meta">1.8 MB · Word 文档</div>
+                        </div>
+                        <div class="file-status">
+                            <span class="status-dot processing"></span>
+                            转换中
+                        </div>
+                        <button class="file-remove">✕</button>
+                    </div>
+                    <div class="file-item">
+                        <div class="file-icon">📘</div>
+                        <div class="file-info">
+                            <div class="file-name">数据统计.xlsx</div>
+                            <div class="file-meta">856 KB · Excel 表格</div>
+                        </div>
+                        <div class="file-status">
+                            <span class="status-dot pending"></span>
+                            等待中
+                        </div>
+                        <button class="file-remove">✕</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度条 -->
+            <div class="progress-section active" id="progressSection">
+                <div class="progress-info">
+                    <span>正在转换: 产品需求文档.docx</span>
+                    <span>67%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 67%;"></div>
+                </div>
+            </div>
+
+            <!-- 底部操作栏 -->
+            <div class="action-bar">
+                <div class="output-path">
+                    <span class="output-label">输出目录:</span>
+                    <input type="text" class="output-input" value="C:\Users\Jack\Documents\MarkAny" readonly>
+                    <button class="btn-browse">浏览...</button>
+                </div>
+                <button class="btn-primary" id="convertBtn">
+                    <span>▶</span>
+                    开始转换
+                </button>
+            </div>
+
+            <!-- 提示 -->
+            <div class="tip">
+                <span class="tip-icon">💡</span>
+                <span>支持拖放多个文件进行批量转换。转换后的文件将保存在您指定的输出目录中。</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 拖放交互
+        const dropZone = document.getElementById('dropZone');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+            });
+        });
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.add('dragover');
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            dropZone.addEventListener(eventName, () => {
+                dropZone.classList.remove('dragover');
+            });
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            console.log('Dropped files:', files);
+        });
+
+        dropZone.addEventListener('click', () => {
+            // 实际应用中这里会打开文件选择对话框
+            console.log('Open file picker');
+        });
+
+        // 转换方向联动
+        const sourceSelect = document.getElementById('sourceFormat');
+        const targetSelect = document.getElementById('targetFormat');
+
+        sourceSelect.addEventListener('change', () => {
+            const source = sourceSelect.value;
+            if (source === 'auto') {
+                targetSelect.innerHTML = `
+                    <option value="md">Markdown</option>
+                    <option value="pdf">PDF 文档</option>
+                    <option value="docx">Word 文档</option>
+                    <option value="html">HTML 网页</option>
+                `;
+            } else if (source === 'md') {
+                targetSelect.innerHTML = `
+                    <option value="pdf">PDF 文档</option>
+                    <option value="docx">Word 文档</option>
+                    <option value="html">HTML 网页</option>
+                `;
+            } else {
+                targetSelect.innerHTML = `
+                    <option value="md">Markdown</option>
+                    <option value="pdf">PDF 文档</option>
+                    <option value="docx">Word 文档</option>
+                    <option value="html">HTML 网页</option>
+                `;
+            }
+        });
+
+        // 开始转换按钮
+        const convertBtn = document.getElementById('convertBtn');
+        convertBtn.addEventListener('click', () => {
+            console.log('Start conversion');
+        });
+
+        // 移除文件
+        document.querySelectorAll('.file-remove').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const fileItem = btn.closest('.file-item');
+                fileItem.style.opacity = '0';
+                fileItem.style.transform = 'translateX(20px)';
+                setTimeout(() => fileItem.remove(), 200);
+            });
+        });
+    </script>
+</body>
+</html>
