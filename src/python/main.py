@@ -2,7 +2,9 @@ import sys
 import json
 import os
 from http.server import HTTPServer, BaseHTTPRequestHandler
-import threading
+
+# 确保可以正确导入子模块
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # 导入转换器
 from converters.pdf_converter import PDFConverter

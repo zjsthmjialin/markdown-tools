@@ -1,6 +1,9 @@
-from .base import BaseConverter
-from ..ocr.tesseract_ocr import TesseractOCR
-from ..utils.image_extractor import ImageExtractor
+import sys
+import os
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
+from converters.base import BaseConverter
+from ocr.tesseract_ocr import TesseractOCR
+from utils.image_extractor import ImageExtractor
 import pdfplumber
 import fitz
 import os
