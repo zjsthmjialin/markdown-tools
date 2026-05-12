@@ -7,3 +7,53 @@
   font-size: 24px;
   font-family: system-ui, sans-serif;
 }
+
+.drop-zone {
+  width: 500px;
+  height: 300px;
+  border: 2px dashed #555;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #1a1a1a;
+}
+
+.drop-zone:hover {
+  border-color: #777;
+  background: #222;
+}
+
+.drop-zone.dragover {
+  border-color: #4a9eff;
+  background: rgba(74, 158, 255, 0.1);
+}
+
+.drop-zone-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: #ccc;
+}
+
+.drop-icon {
+  font-size: 48px;
+}
+
+.drop-title {
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.drop-subtitle {
+  font-size: 14px;
+  color: #888;
+}
+
+.drop-subtitle span {
+  color: #4a9eff;
+  text-decoration: underline;
+}
