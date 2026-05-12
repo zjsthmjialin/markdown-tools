@@ -186,3 +186,209 @@
   background: #333;
   color: #fff;
 }
+
+/* Header */
+.header {
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.logo-icon {
+  font-size: 36px;
+}
+
+.logo-text {
+  font-size: 32px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.logo-text span {
+  color: #4a9eff;
+}
+
+.tagline {
+  font-size: 14px;
+  color: #888;
+  margin: 0;
+}
+
+/* Direction Section */
+.direction-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.direction-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.direction-label {
+  font-size: 12px;
+  color: #888;
+  text-align: center;
+}
+
+.direction-arrow {
+  font-size: 24px;
+  color: #4a9eff;
+}
+
+.select-wrapper select {
+  width: 140px;
+  padding: 8px 12px;
+  font-size: 14px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #222;
+  color: #fff;
+  cursor: pointer;
+  outline: none;
+}
+
+.select-wrapper select:hover {
+  border-color: #555;
+}
+
+.select-wrapper select:focus {
+  border-color: #4a9eff;
+}
+
+/* Action Bar */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  margin-top: 20px;
+}
+
+.output-path {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+}
+
+.output-label {
+  font-size: 14px;
+  color: #888;
+  flex-shrink: 0;
+}
+
+.output-input {
+  flex: 1;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #222;
+  color: #ccc;
+  min-width: 0;
+}
+
+.btn-browse {
+  padding: 8px 16px;
+  font-size: 14px;
+  border: 1px solid #333;
+  border-radius: 8px;
+  background: #222;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.btn-browse:hover {
+  background: #333;
+  border-color: #555;
+}
+
+.btn-primary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: #4a9eff;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #3a8eef;
+}
+
+.btn-primary:disabled {
+  background: #333;
+  color: #666;
+  cursor: not-allowed;
+}
+
+/* Progress Bar */
+.progress-section {
+  padding: 16px 20px;
+  background: #1a1a1a;
+  border-radius: 12px;
+  margin-top: 20px;
+  display: none;
+}
+
+.progress-section.active {
+  display: block;
+}
+
+.progress-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+  font-size: 13px;
+  color: #ccc;
+}
+
+.progress-bar {
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4a9eff, #6bb5ff);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+
+/* Main Card */
+.main-card {
+  width: 540px;
+  padding: 24px;
+  background: #252525;
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
