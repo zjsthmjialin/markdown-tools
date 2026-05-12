@@ -31,13 +31,39 @@ function App() {
     setFiles(prev => prev.filter(f => f.id !== id))
   }
 
-  const handleBrowse = () => {
-    // TODO: 调用 electron API 选择目录
-    console.log('Browse for directory')
+  const handleBrowse = async () => {
+    const selected = await window.electronAPI.selectDirectory()
+    if (selected) {
+      setOutputPath(selected)
+    }
   }
 
-  const handleConvert = () => {
-    console.log('Start conversion')
+  const handleConvert = async () => {
+    setFiles(prev => prev.map(f => ({ ...f, status: 'processing' as const, progress: 0 })))
+
+    for (const file of files) {
+      try {
+        const result = await window.electronAPI.convertFile(
+          file.name,
+          sourceFormat,
+          targetFormat
+        )
+
+        if (result.success) {
+          setFiles(prev => prev.map(f =>
+            f.id === file.id ? { ...f, status: 'completed' as const, outputPath: result.outputPath } : f
+          ))
+        } else {
+          setFiles(prev => prev.map(f =>
+            f.id === file.id ? { ...f, status: 'error' as const } : f
+          ))
+        }
+      } catch (error) {
+        setFiles(prev => prev.map(f =>
+          f.id === file.id ? { ...f, status: 'error' as const } : f
+        ))
+      }
+    }
   }
 
   return (
