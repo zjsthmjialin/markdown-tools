@@ -4,34 +4,30 @@
 
 ## 功能特点
 
-  * 支持多种格式互转
-  * 保持原始排版格式
-  * 支持中英文混排
-
-
+* 支持多种格式互转
+* 保持原始排版格式
+* 支持中英文混排
 
 ## 技术栈
 
-  1. Python 后端处理
-  2. Electron 桌面应用框架
-  3. Vue.js 前端界面
-
-
+1. Python 后端处理
+2. Electron 桌面应用框架
+3. Vue.js 前端界面
 
 ## 数据示例
 
-格式 | 扩展名 | 支持状态  
----|---|---  
-PDF | .pdf | 已支持  
-Word | .docx | 已支持  
-Excel | .xlsx | 已支持  
-  
+| 格式 | 扩展名 | 支持状态 |
+| --- | --- | --- |
+| PDF | .pdf | 已支持 |
+| Word | .docx | 已支持 |
+| Excel | .xlsx | 已支持 |
+
 ## 代码示例
-    
-    
-    def convert(file_path, target_format):
-        converter = get_converter(file_path)
-        return converter.to_markdown(file_path, output_dir)
-    
+
+```
+def convert(file_path, target_format):
+    converter = get_converter(file_path)
+    return converter.to_markdown(file_path, output_dir)
+```
 
 更多内容请参考[项目文档](https://example.com)。

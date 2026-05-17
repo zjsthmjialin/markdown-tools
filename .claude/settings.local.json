@@ -89,7 +89,13 @@
       "Bash(python -m pytest --version)",
       "Bash(python -m pip install pytest)",
       "Bash(python -m pytest tests/ -v)",
-      "Bash(git add *)"
+      "Bash(git add *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(python main.py)",
+      "Bash(curl -s http://127.0.0.1:8765/)",
+      "Bash(python test_conversions.py)",
+      "Bash(git commit *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache"

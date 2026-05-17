@@ -1,4 +1,4 @@
-"""Direct format-to-format converters that preserve original formatting."""
+"""Direct format-to-format converters."""
 
 import os
 import sys
@@ -6,85 +6,6 @@ import sys
 
 class DirectConverter:
     """Handles direct conversion between formats without Markdown intermediate."""
-
-    @staticmethod
-    def pdf_to_docx(file_path: str, output_dir: str) -> dict:
-        """Convert PDF to DOCX using PyMuPDF rendering + Tesseract OCR.
-        Produces editable text without requiring Acrobat."""
-        import fitz
-        from docx import Document
-        from docx.shared import Pt, Cm, Inches
-        from ocr.tesseract_ocr import TesseractOCR
-
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
-        output_path = os.path.join(output_dir, base_name + '.docx')
-        os.makedirs(output_dir, exist_ok=True)
-
-        ocr = TesseractOCR()
-        doc = fitz.open(file_path)
-        document = Document()
-
-        # Remove default empty paragraph
-        if document.paragraphs:
-            p = document.paragraphs[0]._element
-            p.getparent().remove(p)
-
-        # Set A4 margins
-        section = document.sections[0]
-        section.page_width = Inches(8.27)
-        section.page_height = Inches(11.69)
-        section.left_margin = Cm(2.5)
-        section.right_margin = Cm(2.5)
-        section.top_margin = Cm(2.5)
-        section.bottom_margin = Cm(2.5)
-
-        total_pages = len(doc)
-        for page_num in range(total_pages):
-            page = doc[page_num]
-
-            # Render at high DPI for OCR quality (300 DPI)
-            mat = fitz.Matrix(300 / 72, 300 / 72)
-            pix = page.get_pixmap(matrix=mat, alpha=False)
-            img_bytes = pix.tobytes("png")
-
-            # OCR the page image
-            text = ocr.extract_text_from_image(img_bytes)
-
-            if text.strip():
-                # Add as page title
-                document.add_heading(f'第 {page_num + 1} 页', level=2)
-
-                # Parse OCR text into paragraphs (split by newlines)
-                lines = text.split('\n')
-                for line in lines:
-                    line = line.strip()
-                    if not line:
-                        continue
-
-                    # Try to detect and preserve table structure
-                    # If line has multiple tabs or consistent spacing, treat as table row
-                    if '\t' in line:
-                        cells = line.split('\t')
-                        table = document.add_table(rows=1, cols=len(cells))
-                        table.style = 'Light Grid Accent 1'
-                        row = table.rows[0]
-                        for i, cell_text in enumerate(cells):
-                            row.cells[i].text = cell_text.strip()
-                    else:
-                        p = document.add_paragraph(line)
-                        p.paragraph_format.space_after = Pt(2)
-                        p.paragraph_format.line_spacing = Pt(14)
-            else:
-                # No text found, add placeholder
-                document.add_paragraph(f'[第 {page_num + 1} 页无文字内容]')
-
-            # Page break (except last)
-            if page_num < total_pages - 1:
-                document.add_page_break()
-
-        doc.close()
-        document.save(output_path)
-        return {'success': True, 'outputPath': output_path}
 
     @staticmethod
     def pdf_to_pptx(file_path: str, output_dir: str) -> dict:
@@ -131,6 +52,7 @@ class DirectConverter:
 
         abs_input = os.path.abspath(file_path)
         abs_output = os.path.abspath(output_path)
+
         input_repr = repr(abs_input)
         output_repr = repr(abs_output)
 
@@ -242,14 +164,11 @@ finally:
         return {'success': True, 'outputPath': output_path}
 
     _DIRECT_PAIRS = {
-        ('.pdf', 'docx'): 'pdf_to_docx',
         ('.pdf', 'pptx'): 'pdf_to_pptx',
         ('.docx', 'pdf'): 'docx_to_pdf',
         ('.doc', 'pdf'): 'docx_to_pdf',
         ('.pptx', 'pdf'): 'pptx_to_pdf',
         ('.ppt', 'pdf'): 'pptx_to_pdf',
-        ('.docx', 'docx'): None,
-        ('.pdf', 'pdf'): None,
     }
 
     @staticmethod
@@ -263,14 +182,5 @@ finally:
             return {'success': False, 'error': f'不支持的直接转换: {source_ext} -> {target_format}'}
 
         method_name = DirectConverter._DIRECT_PAIRS[pair]
-        if method_name is None:
-            base_name = os.path.splitext(os.path.basename(file_path))[0]
-            ext = '.' + target_format
-            output_path = os.path.join(output_dir, base_name + ext)
-            os.makedirs(output_dir, exist_ok=True)
-            import shutil
-            shutil.copy2(file_path, output_path)
-            return {'success': True, 'outputPath': output_path}
-
         method = getattr(DirectConverter, method_name)
         return method(file_path, output_dir)
