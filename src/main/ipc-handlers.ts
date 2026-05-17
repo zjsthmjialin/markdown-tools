@@ -41,15 +41,14 @@ export async function startPythonService() {
     cwd = pythonDir
   } else {
     // In production, use the bundled PyInstaller executable
-    const backendDir = path.join(process.resourcesPath!, 'python-backend')
-    const backendExe = path.join(backendDir, 'markany-backend.exe')
+    const backendExe = path.join(process.resourcesPath!, 'python-backend', 'markany-backend.exe')
     // Fall back to Python script if PyInstaller bundle not found
     if (fs.existsSync(backendExe)) {
       command = backendExe
       args = []
-      cwd = backendDir
+      cwd = path.join(process.resourcesPath!, 'python-backend')
     } else {
-      const pythonDir = path.join(process.resourcesPath!, 'python')
+      const pythonDir = path.join(process.resourcesPath!, 'python-source')
       command = 'python'
       args = [path.join(pythonDir, 'main.py')]
       cwd = pythonDir

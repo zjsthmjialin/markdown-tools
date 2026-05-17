@@ -13,10 +13,16 @@ files:
   - "!**/*.pyc"
 
 extraResources:
-  - from: src/python/
-    to: python/
+  - from: src/python/dist/markany-backend.exe
+    to: python-backend/markany-backend.exe
     filter:
       - "**/*"
+  - from: src/python/
+    to: python-source/
+    filter:
+      - "converters/*.py"
+      - "utils/*.py"
+      - "requirements.txt"
       - "!**/__pycache__"
       - "!**/*.pyc"
       - "!dist/**"

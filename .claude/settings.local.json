@@ -111,7 +111,15 @@
       "Bash(start \"\" MarkAny.exe)",
       "Bash(findstr \"8765\")",
       "Bash(ping -n 6 127.0.0.1)",
-      "Bash(findstr \"517\")"
+      "Bash(findstr \"517\")",
+      "Bash(curl -s http://localhost:5173 -o nul)",
+      "Bash(npx electron-builder *)",
+      "WebFetch(domain:minimax-algeng-chat-tts.oss-cn-wulanchabu.aliyuncs.com)",
+      "mcp__MiniMax__understand_image",
+      "Bash(pkill -f \"electron\")",
+      "Bash(pkill -f \"python.*main.py\")",
+      "Bash(git reset *)",
+      "Bash(git checkout *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache"
