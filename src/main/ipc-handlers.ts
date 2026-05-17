@@ -2,6 +2,7 @@ import { ipcMain, dialog } from 'electron'
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
 import path from 'path'
+import fs from 'fs'
 
 let pythonProcess: ChildProcess | null = null
 
@@ -28,18 +29,39 @@ function waitForPythonService(maxRetries = 30, interval = 1000): Promise<void> {
 
 export async function startPythonService() {
   const isDev = process.env.NODE_ENV === 'development'
-  const resourcesPath = isDev
-    ? path.join(__dirname, '../../src/python')
-    : path.join(process.resourcesPath!, 'python')
 
-  const pythonScript = path.join(resourcesPath, 'main.py')
+  let command: string
+  let args: string[]
+  let cwd: string
+
+  if (isDev) {
+    const pythonDir = path.join(__dirname, '../../src/python')
+    command = 'python'
+    args = [path.join(pythonDir, 'main.py')]
+    cwd = pythonDir
+  } else {
+    // In production, use the bundled PyInstaller executable
+    const backendDir = path.join(process.resourcesPath!, 'python-backend')
+    const backendExe = path.join(backendDir, 'markany-backend.exe')
+    // Fall back to Python script if PyInstaller bundle not found
+    if (fs.existsSync(backendExe)) {
+      command = backendExe
+      args = []
+      cwd = backendDir
+    } else {
+      const pythonDir = path.join(process.resourcesPath!, 'python')
+      command = 'python'
+      args = [path.join(pythonDir, 'main.py')]
+      cwd = pythonDir
+    }
+  }
 
   console.log('[Python] Starting service...')
-  console.log('[Python] Script path:', pythonScript)
+  console.log('[Python] Command:', command, args.join(' '))
 
-  pythonProcess = spawn('python', [pythonScript], {
+  pythonProcess = spawn(command, args, {
     stdio: ['pipe', 'pipe', 'pipe'],
-    cwd: resourcesPath
+    cwd
   })
 
   pythonProcess.stdout?.on('data', (data) => {
@@ -125,6 +147,27 @@ async function callPythonService(data: {
 }
 
 export function setupIpcHandlers() {
+  // 选择文件
+  ipcMain.handle('select-files', async () => {
+    const result = await dialog.showOpenDialog({
+      properties: ['openFile', 'multiSelections'],
+      filters: [
+        { name: 'Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'html', 'htm', 'txt', 'md'] }
+      ]
+    })
+    if (result.canceled || result.filePaths.length === 0) return []
+
+    return result.filePaths.map(p => {
+      const stat = fs.statSync(p)
+      return {
+        name: path.basename(p),
+        path: p,
+        size: stat.size,
+        extension: path.extname(p).toLowerCase()
+      }
+    })
+  })
+
   // 选择目录
   ipcMain.handle('select-directory', async () => {
     const result = await dialog.showOpenDialog({

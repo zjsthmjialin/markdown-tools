@@ -1,10 +1,20 @@
 from converters.base import BaseConverter
-from ocr.tesseract_ocr import TesseractOCR
 import fitz
+
 
 class PDFConverter(BaseConverter):
     def __init__(self):
-        self.ocr = TesseractOCR()
+        self._ocr = None
+
+    @property
+    def ocr(self):
+        if self._ocr is None:
+            try:
+                from ocr.tesseract_ocr import TesseractOCR
+                self._ocr = TesseractOCR()
+            except Exception:
+                self._ocr = False
+        return self._ocr if self._ocr is not None else None
 
     def get_supported_extensions(self) -> list[str]:
         return ['.pdf']
@@ -22,8 +32,7 @@ class PDFConverter(BaseConverter):
                     markdown_content.append(f"## 第 {page_num} 页\n")
                     markdown_content.append(text)
 
-            # If almost no text, it's likely a scanned PDF — retry with OCR
-            if total_text < 100 and markdown_content:
+            if total_text < 100 and self.ocr:
                 return self._extract_with_ocr(file_path)
 
             return '\n\n'.join(markdown_content)

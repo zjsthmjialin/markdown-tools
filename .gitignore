@@ -5,3 +5,5 @@ build/
 release/
 *.pyc
 __pycache__/
+test_output/
+src/test_output/

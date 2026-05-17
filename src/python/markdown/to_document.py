@@ -43,24 +43,28 @@ def _render_markdown_to_html(md_text: str) -> str:
         sys.modules.update(_saved)
 
 
+def _is_table_separator(line: str) -> bool:
+    """Check if a line is a markdown table separator like |---|---|"""
+    return bool(re.match(r'^\|[-\s|]+\|$', line.strip()))
+
+
+def _parse_table_row(line: str):
+    """Parse a markdown table row into a list of cell values."""
+    return [c.strip() for c in line.strip().split('|')[1:-1]]
+
+
 class MarkdownToDocument:
     def to_pdf(self, markdown_content: str, output_path: str) -> None:
-        """将 Markdown 转换为 PDF，优先使用 WeasyPrint，回退使用 reportlab"""
-        html_content = self._markdown_to_html(markdown_content)
-
-        try:
-            from weasyprint import HTML as WeasyHTML
-            WeasyHTML(string=html_content).write_pdf(output_path)
-        except (ImportError, OSError, Exception):
-            # WeasyPrint 不可用或依赖缺失时，使用 reportlab 生成简单 PDF
-            self._pdf_with_reportlab(markdown_content, output_path)
+        """将 Markdown 转换为 PDF，使用 reportlab"""
+        self._pdf_with_reportlab(markdown_content, output_path)
 
     def _pdf_with_reportlab(self, markdown_content: str, output_path: str) -> None:
-        """使用 reportlab 生成 PDF（简化版本）"""
+        """使用 reportlab 生成 PDF（支持表格）"""
         from reportlab.lib.pagesizes import A4
         from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
         from reportlab.lib.units import mm
+        from reportlab.lib import colors
         from reportlab.pdfbase import pdfmetrics
         from reportlab.pdfbase.ttfonts import TTFont
 
@@ -90,10 +94,55 @@ class MarkdownToDocument:
         styles.add(ParagraphStyle(name='CNH3', fontName=font_name, fontSize=13, leading=20, spaceAfter=8))
 
         elements = []
+        table_buffer = []  # buffer for table rows
+
+        def flush_table():
+            """Flush buffered table rows into a reportlab Table element."""
+            if not table_buffer:
+                return
+            # First row is header, rest are data
+            num_cols = max(len(row) for row in table_buffer)
+            # Pad rows to have equal columns
+            for row in table_buffer:
+                while len(row) < num_cols:
+                    row.append('')
+            table = Table(table_buffer)
+            style_commands = [
+                ('BACKGROUND', (0, 0), (-1, 0), colors.Color(0.91, 0.93, 0.96)),
+                ('TEXTCOLOR', (0, 0), (-1, 0), colors.black),
+                ('FONTNAME', (0, 0), (-1, 0), font_name),
+                ('FONTSIZE', (0, 0), (-1, 0), 11),
+                ('FONTNAME', (0, 1), (-1, -1), font_name),
+                ('FONTSIZE', (0, 1), (-1, -1), 10),
+                ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+                ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+                ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+                ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.Color(0.96, 0.97, 0.98)]),
+                ('TOPPADDING', (0, 0), (-1, -1), 4),
+                ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+                ('LEFTPADDING', (0, 0), (-1, -1), 6),
+                ('RIGHTPADDING', (0, 0), (-1, -1), 6),
+            ]
+            table.setStyle(TableStyle(style_commands))
+            elements.append(table)
+            elements.append(Spacer(1, 6))
+            table_buffer.clear()
+
         for line in markdown_content.split('\n'):
             line = line.strip()
             if not line:
+                flush_table()
                 continue
+
+            # 表格行
+            if line.startswith('|'):
+                # Skip separator rows
+                if _is_table_separator(line):
+                    continue
+                table_buffer.append([xml_escape(c) for c in _parse_table_row(line)])
+                continue
+            else:
+                flush_table()
 
             # 标题
             heading = re.match(r'^(#{1,6})\s+(.+)$', line)
@@ -110,19 +159,11 @@ class MarkdownToDocument:
                 elements.append(Paragraph(f'• {xml_escape(line[2:])}', styles['CNBody']))
                 continue
 
-            # 表格分隔行跳过
-            if re.match(r'^\|[-\s|]+\|$', line):
-                continue
-
-            # 表格行
-            if line.startswith('|'):
-                cells = [c.strip() for c in line.split('|')[1:-1]]
-                row_text = ' | '.join(xml_escape(c) for c in cells)
-                elements.append(Paragraph(row_text, styles['CNBody']))
-                continue
-
             # 普通段落
             elements.append(Paragraph(xml_escape(line), styles['CNBody']))
+
+        # Flush any remaining table
+        flush_table()
 
         if elements:
             doc.build(elements)
@@ -135,22 +176,51 @@ class MarkdownToDocument:
         lines = markdown_content.split('\n')
         in_code_block = False
         code_lines = []
+        table_buffer = []  # buffer for table rows
+
+        def flush_table():
+            """Flush buffered table rows into a Word table."""
+            if not table_buffer:
+                return
+            num_cols = max(len(row) for row in table_buffer)
+            # Pad rows to have equal columns
+            for row in table_buffer:
+                while len(row) < num_cols:
+                    row.append('')
+            table = doc.add_table(rows=len(table_buffer), cols=num_cols)
+            table.style = 'Light Grid Accent 1'
+            for i, row_data in enumerate(table_buffer):
+                for j, cell_text in enumerate(row_data):
+                    table.rows[i].cells[j].text = cell_text
+            table_buffer.clear()
 
         for line in lines:
+            # Code block handling
             if line.strip().startswith('```'):
                 if in_code_block:
+                    flush_table()
                     p = doc.add_paragraph()
                     run = p.add_run('\n'.join(code_lines))
                     run.font.name = 'Consolas'
                     run.font.size = Pt(10)
                     code_lines = []
                 else:
+                    flush_table()
                     in_code_block = True
                 continue
 
             if in_code_block:
                 code_lines.append(line)
                 continue
+
+            # Table row buffering
+            if line.startswith('|'):
+                if _is_table_separator(line):
+                    continue
+                table_buffer.append(_parse_table_row(line))
+                continue
+            else:
+                flush_table()
 
             heading = re.match(r'^(#{1,6})\s+(.+)$', line)
             if heading:
@@ -163,17 +233,11 @@ class MarkdownToDocument:
                 doc.add_paragraph(line[2:], style='List Bullet')
                 continue
 
-            if line.startswith('|'):
-                # Skip separator rows
-                if re.match(r'^\|[-\s|]+\|$', line):
-                    continue
-                # Render table rows as text
-                cells = [c.strip() for c in line.split('|')[1:-1]]
-                doc.add_paragraph(' | '.join(cells))
-                continue
-
             if line.strip():
                 doc.add_paragraph(line)
+
+        # Flush any remaining table
+        flush_table()
 
         doc.save(output_path)
 
@@ -207,10 +271,52 @@ class MarkdownToDocument:
             tf.word_wrap = True
 
             first = True
+            table_buffer = []  # buffer for table rows
+
+            def flush_table():
+                """Flush buffered table rows into a PowerPoint table."""
+                if not table_buffer:
+                    return
+                num_rows = len(table_buffer)
+                num_cols = max(len(row) for row in table_buffer)
+                # Pad rows to have equal columns
+                for row in table_buffer:
+                    while len(row) < num_cols:
+                        row.append('')
+
+                tbl_width = Inches(11.333)
+                row_height = Inches(0.4)
+                tbl_height = row_height * num_rows
+                tbl_left = Inches(1)
+                tbl_top = Inches(0.5)
+
+                table_shape = slide.shapes.add_table(
+                    num_rows, num_cols, tbl_left, tbl_top, tbl_width, tbl_height
+                )
+                table = table_shape.table
+
+                for i, row_data in enumerate(table_buffer):
+                    for j, cell_text in enumerate(row_data):
+                        cell = table.cell(i, j)
+                        cell.text = cell_text
+                        for paragraph in cell.text_frame.paragraphs:
+                            paragraph.font.size = Pt(14)
+
+                table_buffer.clear()
+
             for line in lines:
                 line = line.strip()
                 if not line:
                     continue
+
+                # Table row buffering
+                if line.startswith('|'):
+                    if _is_table_separator(line):
+                        continue
+                    table_buffer.append(_parse_table_row(line))
+                    continue
+                else:
+                    flush_table()
 
                 h_match = re.match(r'^(#{1,6})\s+(.+)$', line)
                 if h_match:
@@ -239,15 +345,15 @@ class MarkdownToDocument:
                     p.space_after = Pt(6)
                     continue
 
-                if line.startswith('|'):
-                    continue  # skip tables in PPT for simplicity
-
                 # Regular paragraph
                 p = tf.add_paragraph() if not first else tf.paragraphs[0]
                 first = False
                 p.text = line
                 p.font.size = Pt(18)
                 p.space_after = Pt(8)
+
+            # Flush any remaining table
+            flush_table()
 
         prs.save(output_path)
 

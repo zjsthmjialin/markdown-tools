@@ -1,10 +1,12 @@
 import { useCallback, useState } from 'react'
+import { SelectedFile } from '../types'
 
 interface DropZoneProps {
   onFilesSelected: (files: File[]) => void
+  onFilesSelectedViaDialog: (files: SelectedFile[]) => void
 }
 
-export default function DropZone({ onFilesSelected }: DropZoneProps) {
+export default function DropZone({ onFilesSelected, onFilesSelectedViaDialog }: DropZoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
@@ -24,17 +26,14 @@ export default function DropZone({ onFilesSelected }: DropZoneProps) {
     onFilesSelected(files)
   }, [onFilesSelected])
 
-  const handleClick = useCallback(() => {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.multiple = true
-    input.accept = '.pdf,.docx,.xlsx,.pptx,.html,.txt,.md'
-    input.onchange = (e) => {
-      const files = Array.from((e.target as HTMLInputElement).files || [])
-      onFilesSelected(files)
+  const handleClick = useCallback(async () => {
+    if (window.electronAPI?.selectFiles) {
+      const selectedFiles = await window.electronAPI.selectFiles()
+      if (selectedFiles && selectedFiles.length > 0) {
+        onFilesSelectedViaDialog(selectedFiles)
+      }
     }
-    input.click()
-  }, [onFilesSelected])
+  }, [onFilesSelectedViaDialog])
 
   return (
     <div

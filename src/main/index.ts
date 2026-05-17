@@ -5,7 +5,7 @@ import { setupIpcHandlers, startPythonService, stopPythonService } from './ipc-h
 let win: BrowserWindow | null = null
 const isDev = process.env.NODE_ENV === 'development'
 
-app.whenReady().then(async () => {
+function createWindow() {
   const primaryDisplay = screen.getPrimaryDisplay()
   const { width, height } = primaryDisplay.workAreaSize
 
@@ -24,13 +24,9 @@ app.whenReady().then(async () => {
     }
   })
 
-  setupIpcHandlers()
-  await startPythonService()
-
   if (isDev) {
     win.loadURL('http://localhost:5173')
     win.webContents.openDevTools()
-    win.show()
   } else {
     win.loadFile(path.join(__dirname, '../../dist/index.html'))
   }
@@ -42,6 +38,12 @@ app.whenReady().then(async () => {
   win.on('closed', () => {
     win = null
   })
+}
+
+app.whenReady().then(async () => {
+  setupIpcHandlers()
+  await startPythonService()
+  createWindow()
 })
 
 app.on('window-all-closed', () => {
@@ -50,7 +52,11 @@ app.on('window-all-closed', () => {
 })
 
 app.on('activate', () => {
-  if (win === null) {
-    app.whenReady()
+  if (BrowserWindow.getAllWindows().length === 0) {
+    createWindow()
   }
+})
+
+app.on('before-quit', () => {
+  stopPythonService()
 })

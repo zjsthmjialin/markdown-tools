@@ -43,5 +43,11 @@ export default defineConfig({
     alias: {
       '@': path.resolve(__dirname, 'src/renderer')
     }
+  },
+  test: {
+    environment: 'jsdom',
+    globals: true,
+    setupFiles: ['src/renderer/__tests__/setup.ts'],
+    include: ['src/renderer/**/*.{test,spec}.{ts,tsx}']
   }
 })

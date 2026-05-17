@@ -2,14 +2,22 @@ interface ActionBarProps {
   outputPath: string
   onBrowse: () => void
   onConvert: () => void
+  onCancel: () => void
+  onReset: () => void
   disabled: boolean
+  isConverting: boolean
+  hasCompleted: boolean
 }
 
 export default function ActionBar({
   outputPath,
   onBrowse,
   onConvert,
-  disabled
+  onCancel,
+  onReset,
+  disabled,
+  isConverting,
+  hasCompleted
 }: ActionBarProps) {
   return (
     <div className="action-bar">
@@ -25,14 +33,24 @@ export default function ActionBar({
           浏览...
         </button>
       </div>
-      <button
-        className="btn-primary"
-        onClick={onConvert}
-        disabled={disabled}
-      >
-        <span>▶</span>
-        开始转换
-      </button>
+      {isConverting ? (
+        <button className="btn-cancel" onClick={onCancel}>
+          取消
+        </button>
+      ) : hasCompleted ? (
+        <button className="btn-reset" onClick={onReset}>
+          重置
+        </button>
+      ) : (
+        <button
+          className="btn-primary"
+          onClick={onConvert}
+          disabled={disabled}
+        >
+          <span>▶</span>
+          开始转换
+        </button>
+      )}
     </div>
   )
 }

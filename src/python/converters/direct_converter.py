@@ -1,6 +1,7 @@
 """Direct format-to-format converters that preserve original formatting."""
 
 import os
+import sys
 
 
 class DirectConverter:
@@ -159,14 +160,18 @@ finally:
             tmp_script = f.name
 
         try:
-            result = subprocess.run(['python', tmp_script], capture_output=True,
+            result = subprocess.run([sys.executable, tmp_script], capture_output=True,
                                     text=True, timeout=300)
             if result.returncode != 0 or 'OK' not in (result.stdout or ''):
                 stderr = (result.stderr or '').encode('utf-8', errors='replace').decode('utf-8', errors='replace') if result.stderr else ''
                 stdout = (result.stdout or '').encode('utf-8', errors='replace').decode('utf-8', errors='replace') if result.stdout else ''
+                if 'win32com' in stderr or 'pywintypes' in stderr or 'COM' in stderr.upper():
+                    return {'success': False, 'error': '此转换需要安装 Microsoft Word'}
                 return {'success': False, 'error': f'DOCX转PDF失败: {stdout}{stderr}'[:500]}
             if not os.path.exists(output_path):
                 return {'success': False, 'error': 'DOCX转PDF失败: 输出文件未生成'}
+        except FileNotFoundError:
+            return {'success': False, 'error': '此转换需要安装 Microsoft Word'}
         finally:
             try:
                 os.unlink(tmp_script)
@@ -216,14 +221,18 @@ finally:
             tmp_script = f.name
 
         try:
-            result = subprocess.run(['python', tmp_script], capture_output=True,
+            result = subprocess.run([sys.executable, tmp_script], capture_output=True,
                                     text=True, timeout=120)
             if result.returncode != 0 or 'OK' not in (result.stdout or ''):
                 stderr = (result.stderr or '').encode('utf-8', errors='replace').decode('utf-8', errors='replace') if result.stderr else ''
                 stdout = (result.stdout or '').encode('utf-8', errors='replace').decode('utf-8', errors='replace') if result.stdout else ''
+                if 'win32com' in stderr or 'pywintypes' in stderr or 'COM' in stderr.upper():
+                    return {'success': False, 'error': '此转换需要安装 Microsoft PowerPoint'}
                 return {'success': False, 'error': f'PPTX转PDF失败: {stdout}{stderr}'[:500]}
             if not os.path.exists(output_path):
                 return {'success': False, 'error': 'PPTX转PDF失败: 输出文件未生成'}
+        except FileNotFoundError:
+            return {'success': False, 'error': '此转换需要安装 Microsoft PowerPoint'}
         finally:
             try:
                 os.unlink(tmp_script)

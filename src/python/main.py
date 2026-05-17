@@ -9,6 +9,7 @@ from converters.markitdown_converter import MarkItDownConverter
 from converters.pdf_converter import PDFConverter
 from converters.direct_converter import DirectConverter
 from markdown.to_document import MarkdownToDocument
+from utils.image_extractor import ImageExtractor
 
 class ConversionHandler(BaseHTTPRequestHandler):
     # All non-PDF formats use MarkItDown, PDF uses its own with OCR fallback
@@ -117,10 +118,31 @@ class ConversionHandler(BaseHTTPRequestHandler):
 
         markdown_content = converter.to_markdown(file_path, output_dir)
 
+        # Extract embedded images from the source document
+        image_map = self._extract_images(file_path, ext, output_dir)
+        if image_map:
+            image_lines = ['\n\n---\n\n## Extracted Images\n']
+            for _, saved_filename in image_map.items():
+                image_lines.append(f'\n![image](images/{saved_filename})\n')
+            markdown_content += ''.join(image_lines)
+
         with open(output_path, 'w', encoding='utf-8') as f:
             f.write(markdown_content)
 
         return {'success': True, 'outputPath': output_path, 'content': markdown_content}
+
+    def _extract_images(self, file_path, ext, output_dir):
+        """Dispatch to the appropriate ImageExtractor method based on file extension."""
+        try:
+            if ext == '.pdf':
+                return ImageExtractor.extract_from_pdf(file_path, output_dir)
+            elif ext == '.docx':
+                return ImageExtractor.extract_from_docx(file_path, output_dir)
+            elif ext == '.pptx':
+                return ImageExtractor.extract_from_pptx(file_path, output_dir)
+        except Exception:
+            pass
+        return {}
 
     def convert_from_markdown(self, file_path, target_format, output_dir):
         with open(file_path, 'r', encoding='utf-8') as f:

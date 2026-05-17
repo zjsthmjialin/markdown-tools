@@ -9,17 +9,24 @@ directories:
 files:
   - dist/**/*
   - dist-electron/**/*
-  - python/**/*
-  - "!python/**/*.pyc"
   - "!**/__pycache__"
+  - "!**/*.pyc"
 
 extraResources:
+  # Try PyInstaller bundle first, fall back to Python source
+  - from: src/python/dist/markany-backend/
+    to: python-backend/
+    filter:
+      - "**/*"
   - from: src/python/
     to: python/
     filter:
       - "**/*"
       - "!**/__pycache__"
       - "!**/*.pyc"
+      - "!dist/**"
+      - "!build/**"
+      - "!*.spec"
 
 win:
   target:

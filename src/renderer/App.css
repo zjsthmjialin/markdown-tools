@@ -27,8 +27,8 @@
 }
 
 .drop-zone.dragover {
-  border-color: #4a9eff;
-  background: rgba(74, 158, 255, 0.1);
+  border-color: #818cf8;
+  background: rgba(129, 140, 248, 0.1);
 }
 
 .drop-zone-content {
@@ -54,7 +54,7 @@
 }
 
 .drop-subtitle span {
-  color: #4a9eff;
+  color: #818cf8;
   text-decoration: underline;
 }
 
@@ -160,7 +160,7 @@
 }
 
 .status-dot.processing {
-  background: #4a9eff;
+  background: #818cf8;
   animation: pulse 1s infinite;
 }
 
@@ -219,7 +219,7 @@
 }
 
 .logo-text span {
-  color: #4a9eff;
+  color: #818cf8;
 }
 
 .tagline {
@@ -254,7 +254,7 @@
 
 .direction-arrow {
   font-size: 24px;
-  color: #4a9eff;
+  color: #818cf8;
 }
 
 .select-wrapper select {
@@ -274,7 +274,7 @@
 }
 
 .select-wrapper select:focus {
-  border-color: #4a9eff;
+  border-color: #6366f1;
 }
 
 /* Action Bar */
@@ -339,14 +339,14 @@
   font-weight: 500;
   border: none;
   border-radius: 8px;
-  background: #4a9eff;
+  background: #6366f1;
   color: #fff;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: #3a8eef;
+  background: #4f46e5;
 }
 
 .btn-primary:disabled {
@@ -384,7 +384,7 @@
 }
 
 .elapsed-time {
-  color: #4a9eff;
+  color: #818cf8;
   font-variant-numeric: tabular-nums;
 }
 
@@ -397,7 +397,7 @@
 
 .progress-fill {
   height: 100%;
-  background: linear-gradient(90deg, #4a9eff, #6bb5ff);
+  background: linear-gradient(90deg, #6366f1, #818cf8);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -418,8 +418,8 @@
   gap: 12px;
   margin-top: 20px;
   padding: 16px;
-  background: rgba(74, 158, 255, 0.1);
-  border: 1px solid rgba(74, 158, 255, 0.2);
+  background: rgba(129, 140, 248, 0.1);
+  border: 1px solid rgba(129, 140, 248, 0.2);
   border-radius: 12px;
   font-size: 13px;
   color: #aaa;
@@ -428,4 +428,43 @@
 .tip-icon {
   font-size: 16px;
   flex-shrink: 0;
+}
+
+.btn-cancel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border: none;
+  border-radius: 8px;
+  background: #ef4444;
+  color: #fff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-cancel:hover {
+  background: #dc2626;
+}
+
+.btn-reset {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 24px;
+  font-size: 15px;
+  font-weight: 500;
+  border: 1px solid #555;
+  border-radius: 8px;
+  background: #222;
+  color: #ccc;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-reset:hover {
+  background: #333;
+  border-color: #777;
 }

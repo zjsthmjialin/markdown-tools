@@ -78,7 +78,18 @@
       "Bash(taskkill //F //IM node.exe)",
       "Bash(dir \"C:\\\\Users\\\\jackt\\\\Desktop\\\\test_output\")",
       "Bash(ls -la \"/c/Users/jackt/Desktop/test_output/330_acrobat_test.docx\")",
-      "Bash(dir \"C:\\\\Users\\\\jackt\\\\Desktop\\\\防火门打印\\\\新建文件夹\")"
+      "Bash(dir \"C:\\\\Users\\\\jackt\\\\Desktop\\\\防火门打印\\\\新建文件夹\")",
+      "Bash(node -e \"const asar = require\\('/d/Projects/markdown-tools/node_modules/@electron/asar'\\); const files = asar.listPackage\\('/d/Projects/markdown-tools/release/win-unpacked/resources/app.asar'\\); files.filter\\(f => f.includes\\('python'\\)\\).forEach\\(f => console.log\\(f\\)\\);\")",
+      "Bash(node -e \"const asar = require\\('@electron/asar'\\); try { const files = asar.listPackage\\('release/win-unpacked/resources/app.asar'\\); files.filter\\(f => f.includes\\('python'\\)\\).forEach\\(f => console.log\\(f\\)\\); } catch\\(e\\) { console.error\\(e.message\\); }\")",
+      "Bash(node -e \"const asar = require\\('@electron/asar'\\); const files = asar.listPackage\\('D:/Projects/markdown-tools/release/win-unpacked/resources/app.asar'\\); files.filter\\(f => f.includes\\('python'\\)\\).forEach\\(f => console.log\\(f\\)\\);\")",
+      "Bash(node -e \"const asar = require\\('@electron/asar'\\); const files = asar.listPackage\\('D:/Projects/markdown-tools/release/win-unpacked/resources/app.asar'\\); const pyFiles = files.filter\\(f => f.includes\\('python'\\) || f.includes\\('.py'\\)\\); console.log\\('Total files:', files.length\\); console.log\\('Python files:', pyFiles.length\\); pyFiles.forEach\\(f => console.log\\(f\\)\\);\")",
+      "Bash(node -e \"const asar = require\\('@electron/asar'\\); const files = asar.listPackage\\('D:/Projects/markdown-tools/release/win-unpacked/resources/app.asar'\\); files.slice\\(0,30\\).forEach\\(f => console.log\\(f\\)\\);\")",
+      "Bash(npx vitest *)",
+      "Bash(python -m pytest tests/test_converters.py -v)",
+      "Bash(python -m pytest --version)",
+      "Bash(python -m pip install pytest)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(git add *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache"

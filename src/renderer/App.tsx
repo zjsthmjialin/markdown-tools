@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import './App.css'
 import Header from './components/Header'
 import DirectionSelect from './components/DirectionSelect'
@@ -7,7 +7,7 @@ import FileList from './components/FileList'
 import ActionBar from './components/ActionBar'
 import ProgressBar from './components/ProgressBar'
 import Tip from './components/Tip'
-import { FileItem } from './types'
+import { FileItem, SelectedFile } from './types'
 
 function App() {
   const [files, setFiles] = useState<FileItem[]>([])
@@ -21,13 +21,46 @@ function App() {
   const convertingRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const handleFilesSelected = useCallback((newFiles: File[]) => {
-    const fileItems: FileItem[] = newFiles.map((f, i) => ({
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current)
+    }
+  }, [])
+
+  // Handle files from drag-and-drop (File objects need path resolution)
+  const handleFilesSelected = useCallback(async (newFiles: File[]) => {
+    const fileItems: FileItem[] = []
+    for (let i = 0; i < newFiles.length; i++) {
+      const f = newFiles[i]
+      let filePath = f.name
+      if (window.electronAPI?.getPathForFile) {
+        try {
+          filePath = window.electronAPI.getPathForFile(f)
+        } catch {
+          // Fallback to filename
+        }
+      }
+      fileItems.push({
+        id: `${Date.now()}-${i}`,
+        name: f.name,
+        path: filePath,
+        size: f.size,
+        extension: '.' + f.name.split('.').pop()?.toLowerCase(),
+        status: 'pending' as const
+      })
+    }
+    setFiles(prev => [...prev, ...fileItems])
+  }, [])
+
+  // Handle files from dialog (already have real paths)
+  const handleFilesSelectedViaDialog = useCallback((selectedFiles: SelectedFile[]) => {
+    const fileItems: FileItem[] = selectedFiles.map((f, i) => ({
       id: `${Date.now()}-${i}`,
       name: f.name,
-      path: (f as any).path || f.name,
+      path: f.path,
       size: f.size,
-      extension: '.' + f.name.split('.').pop()?.toLowerCase(),
+      extension: f.extension,
       status: 'pending' as const
     }))
     setFiles(prev => [...prev, ...fileItems])
@@ -59,7 +92,6 @@ function App() {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
     }, 1000)
 
-    // Capture current files synchronously to avoid stale closure
     const currentFiles = files.map(f => ({ ...f, status: 'processing' as const }))
     setFiles(currentFiles)
 
@@ -73,6 +105,7 @@ function App() {
     const totalFiles = currentFiles.length
 
     for (let i = 0; i < currentFiles.length; i++) {
+      if (!convertingRef.current) break
       const file = currentFiles[i]
       setCurrentFile(file.name)
       setProgress(Math.round((i / totalFiles) * 100))
@@ -104,6 +137,26 @@ function App() {
     setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
   }, [files, sourceFormat, targetFormat, outputPath])
 
+  const handleCancel = useCallback(() => {
+    convertingRef.current = false
+    if (timerRef.current) clearInterval(timerRef.current)
+    setIsConverting(false)
+    setCurrentFile('')
+    setFiles(prev => prev.map(f =>
+      f.status === 'processing' ? { ...f, status: 'pending' } : f
+    ))
+  }, [])
+
+  const handleReset = useCallback(() => {
+    setFiles([])
+    setProgress(0)
+    setCurrentFile('')
+    setElapsedTime(0)
+    setIsConverting(false)
+    convertingRef.current = false
+    if (timerRef.current) clearInterval(timerRef.current)
+  }, [])
+
   return (
     <div className="app-container">
       <Header />
@@ -114,14 +167,18 @@ function App() {
           onSourceChange={setSourceFormat}
           onTargetChange={setTargetFormat}
         />
-        <DropZone onFilesSelected={handleFilesSelected} />
+        <DropZone onFilesSelected={handleFilesSelected} onFilesSelectedViaDialog={handleFilesSelectedViaDialog} />
         <FileList files={files} onRemove={handleRemoveFile} />
         <ProgressBar progress={progress} currentFile={currentFile} elapsedTime={elapsedTime} />
         <ActionBar
           outputPath={outputPath}
           onBrowse={handleBrowse}
           onConvert={handleConvert}
+          onCancel={handleCancel}
+          onReset={handleReset}
           disabled={files.length === 0 || isConverting}
+          isConverting={isConverting}
+          hasCompleted={files.length > 0 && files.every(f => f.status === 'completed' || f.status === 'error')}
         />
         <Tip />
       </div>
