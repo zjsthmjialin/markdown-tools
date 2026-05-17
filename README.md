@@ -24,7 +24,19 @@
 
 ## 安装
 
+### Windows
+
 下载 `MarkAny-Setup-1.0.0.exe` 运行安装即可，无需配置任何环境。
+
+### Mac 安装说明
+
+1. 下载 `MarkAny-1.0.1-mac.dmg`
+2. 打开 DMG，拖拽到应用程序文件夹
+3. **首次打开如果提示"已损坏"**，在终端运行：
+```bash
+   sudo xattr -rd com.apple.quarantine /Applications/MarkAny.app
+```
+   然后重新打开即可
 
 ## 使用方法
 

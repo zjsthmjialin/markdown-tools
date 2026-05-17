@@ -5,5 +5,7 @@ build/
 release/
 *.pyc
 __pycache__/
+*.dmg
 test_output/
 src/test_output/
+src/python/portable-python/

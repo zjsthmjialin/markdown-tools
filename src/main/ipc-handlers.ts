@@ -39,10 +39,15 @@ export async function startPythonService() {
     command = 'python'
     args = [path.join(pythonDir, 'main.py')]
     cwd = pythonDir
+  } else if (process.platform === 'darwin') {
+    // On macOS, use bundled portable Python (PyInstaller has subprocess issues)
+    const pythonDir = path.join(process.resourcesPath!, 'python-portable')
+    command = path.join(pythonDir, 'bin', 'python3')
+    args = [path.join(process.resourcesPath!, 'python-source', 'main.py')]
+    cwd = path.join(process.resourcesPath!, 'python-source')
   } else {
-    // In production, use the bundled PyInstaller executable
+    // On Windows, use the bundled PyInstaller executable
     const backendExe = path.join(process.resourcesPath!, 'python-backend', 'markany-backend.exe')
-    // Fall back to Python script if PyInstaller bundle not found
     if (fs.existsSync(backendExe)) {
       command = backendExe
       args = []

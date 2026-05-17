@@ -13,21 +13,28 @@ files:
   - "!**/*.pyc"
 
 extraResources:
-  - from: src/python/dist/markany-backend.exe
-    to: python-backend/markany-backend.exe
+  - from: src/python/dist/
+    to: python-backend/
     filter:
-      - "**/*"
+      - "markany-backend*"
   - from: src/python/
     to: python-source/
     filter:
       - "converters/*.py"
       - "utils/*.py"
       - "requirements.txt"
+      - "main.py"
       - "!**/__pycache__"
       - "!**/*.pyc"
       - "!dist/**"
       - "!build/**"
       - "!*.spec"
+  - from: src/python/portable-python/
+    to: python-portable/
+    filter:
+      - "**/*"
+      - "!**/__pycache__"
+      - "!**/*.pyc"
 
 win:
   target:
@@ -44,5 +51,16 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: MarkAny
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  category: public.app-category.utilities
+  hardenedRuntime: false
+  entitlements: null
+  entitlementsInherit: null
 
 asar: true
