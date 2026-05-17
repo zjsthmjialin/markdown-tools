@@ -1,6 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import './App.css'
 import Header from './components/Header'
+import TitleBar from './components/TitleBar'
 import DirectionSelect from './components/DirectionSelect'
 import DropZone from './components/DropZone'
 import FileList from './components/FileList'
@@ -20,14 +21,12 @@ function App() {
   const convertingRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  // Cleanup timer on unmount
   useEffect(() => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current)
     }
   }, [])
 
-  // Handle files from drag-and-drop (File objects need path resolution)
   const handleFilesSelected = useCallback(async (newFiles: File[]) => {
     const fileItems: FileItem[] = []
     for (let i = 0; i < newFiles.length; i++) {
@@ -37,7 +36,6 @@ function App() {
         try {
           filePath = window.electronAPI.getPathForFile(f)
         } catch {
-          // Fallback to filename
         }
       }
       fileItems.push({
@@ -52,7 +50,6 @@ function App() {
     setFiles(prev => [...prev, ...fileItems])
   }, [])
 
-  // Handle files from dialog (already have real paths)
   const handleFilesSelectedViaDialog = useCallback((selectedFiles: SelectedFile[]) => {
     const fileItems: FileItem[] = selectedFiles.map((f, i) => ({
       id: `${Date.now()}-${i}`,
@@ -152,8 +149,9 @@ function App() {
 
   return (
     <div className="app-container">
-      <Header />
+      <TitleBar />
       <div className="main-card">
+        <Header />
         <DirectionSelect
           sourceFormat={sourceFormat}
           onSourceChange={setSourceFormat}

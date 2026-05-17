@@ -27,6 +27,9 @@ declare global {
         outputDir?: string
       ) => Promise<{ success: boolean; outputPath?: string; error?: string }>
       getPathForFile: (file: File) => string
+      minimize: () => Promise<void>
+      maximize: () => Promise<void>
+      close: () => Promise<void>
     }
   }
 }

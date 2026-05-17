@@ -5,10 +5,8 @@
   "main": "dist-electron/main/index.js",
   "scripts": {
     "dev": "vite",
-    "python:build": "cd src/python && pyinstaller markany-backend.spec --clean --noconfirm",
-    "build": "npm run python:build && tsc && vite build && electron-builder --win",
-    "build:dir": "npm run python:build && tsc && vite build && electron-builder --win --dir",
-    "build:no-python": "tsc && vite build && electron-builder --win --dir",
+    "build": "tsc && vite build && electron-builder --win",
+    "build:dir": "tsc && vite build && electron-builder --win --dir",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",

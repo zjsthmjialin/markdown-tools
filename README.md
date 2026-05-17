@@ -1,14 +1,26 @@
-# MarkAny - 文档双向转换工具
+# MarkAny - 文档转 Markdown 工具
 
-一款支持 PDF、Word、Excel、PowerPoint、HTML 等格式与 Markdown 双向转换的桌面应用。
+一款简洁高效的桌面应用，将 PDF、Word、Excel、PowerPoint、HTML 等格式文档转换为 Markdown，无需安装任何额外软件。
 
 ## 功能特点
 
-- 多格式支持：PDF、Word、Excel、PowerPoint、HTML、TXT ↔ Markdown
-- 高质量转换：保留原文档结构、表格、图片、代码块
-- OCR 支持：扫描件 PDF 也能识别转换
-- 批量处理：一次添加多个文件批量转换
-- 简洁界面：拖放操作，开箱即用
+- **多格式支持**：PDF、DOCX、DOC、XLSX、XLS、PPTX、PPT、HTML、HTM、TXT → Markdown
+- **图片提取**：自动提取文档中的图片并保存
+- **OCR 识别**：扫描件 PDF 也能转换为可编辑文本
+- **批量处理**：一次添加多个文件批量转换
+- **零依赖**：无需 Microsoft Office、Adobe Acrobat 等任何外部软件
+- **简洁界面**：拖放操作，开箱即用
+
+## 支持格式
+
+| 格式类型 | 支持扩展名 | 处理方式 |
+|---------|-----------|----------|
+| PDF | .pdf | PyMuPDF + Tesseract OCR |
+| Word | .docx, .doc | MarkItDown |
+| Excel | .xlsx, .xls | MarkItDown |
+| PowerPoint | .pptx, .ppt | MarkItDown |
+| HTML | .html, .htm | MarkItDown |
+| 纯文本 | .txt | 自动编码检测 |
 
 ## 安装
 
@@ -16,12 +28,16 @@
 
 ## 使用方法
 
-1. 选择源格式和目标格式
+1. 选择源文件格式（或选择"自动检测"）
 2. 拖放或点击选择文件
-3. 设置输出目录
+3. 设置输出目录（默认与原文件相同目录）
 4. 点击"开始转换"
 
 ## 系统要求
 
 - Windows 10/11 (64位)
 - 约 500MB 可用磁盘空间
+
+## 联系作者
+
+- 邮箱：zjsthm@gmail.com

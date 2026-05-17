@@ -1,4 +1,4 @@
-import { ipcMain, dialog } from 'electron'
+import { ipcMain, dialog, BrowserWindow } from 'electron'
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
 import path from 'path'
@@ -195,6 +195,24 @@ export function setupIpcHandlers() {
       console.error(`Convert error:`, error)
       return { success: false, error: String(error) }
     }
+  })
+
+  // 窗口控制
+  ipcMain.handle('window-minimize', () => {
+    BrowserWindow.getFocusedWindow()?.minimize()
+  })
+
+  ipcMain.handle('window-maximize', () => {
+    const win = BrowserWindow.getFocusedWindow()
+    if (win?.isMaximized()) {
+      win.unmaximize()
+    } else {
+      win?.maximize()
+    }
+  })
+
+  ipcMain.handle('window-close', () => {
+    BrowserWindow.getFocusedWindow()?.close()
   })
 }
 

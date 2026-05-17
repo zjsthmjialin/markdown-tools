@@ -13,11 +13,6 @@ files:
   - "!**/*.pyc"
 
 extraResources:
-  # Try PyInstaller bundle first, fall back to Python source
-  - from: src/python/dist/markany-backend/
-    to: python-backend/
-    filter:
-      - "**/*"
   - from: src/python/
     to: python/
     filter:

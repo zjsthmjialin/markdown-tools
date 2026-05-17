@@ -7,7 +7,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from converters.markitdown_converter import MarkItDownConverter
 from converters.pdf_converter import PDFConverter
-from converters.direct_converter import DirectConverter
 from utils.image_extractor import ImageExtractor
 
 
