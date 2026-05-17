@@ -8,11 +8,11 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from converters.markitdown_converter import MarkItDownConverter
 from converters.pdf_converter import PDFConverter
 from converters.direct_converter import DirectConverter
-from markdown.to_document import MarkdownToDocument
 from utils.image_extractor import ImageExtractor
 
+
 class ConversionHandler(BaseHTTPRequestHandler):
-    # All non-PDF formats use MarkItDown, PDF uses its own with OCR fallback
+    # 只支持正向转换：文档 -> Markdown
     converters = {
         '.pdf': PDFConverter(),         # fast PyMuPDF text extraction + OCR fallback
         '.docx': MarkItDownConverter(),  # Microsoft MarkItDown
@@ -25,7 +25,6 @@ class ConversionHandler(BaseHTTPRequestHandler):
         '.htm': MarkItDownConverter(),
         '.txt': MarkItDownConverter(),
     }
-    markdown_converter = MarkdownToDocument()
 
     def log_message(self, format, *args):
         print(f"[{self.log_date_time_string()}] {format % args}")
@@ -55,53 +54,23 @@ class ConversionHandler(BaseHTTPRequestHandler):
 
     def process_conversion(self, data):
         file_path = data.get('filePath')
-        source_format = data.get('sourceFormat', 'auto')
         target_format = data.get('targetFormat', 'md')
 
         if not file_path or not os.path.exists(file_path):
             return {'success': False, 'error': f'文件不存在: {file_path}'}
 
+        # 只支持转换为 Markdown
+        if target_format != 'md':
+            return {'success': False, 'error': f'仅支持转换为 Markdown 格式'}
+
         output_dir = data.get('outputDir') or os.path.dirname(file_path)
         ext = os.path.splitext(file_path)[1].lower()
 
-        if source_format == 'auto':
-            if ext in self.converters or ext == '.md':
-                pass
-            else:
-                return {'success': False, 'error': f'不支持的文件格式: {ext}'}
-        else:
-            ext = '.' + source_format
+        if ext not in self.converters and ext != '.md':
+            return {'success': False, 'error': f'不支持的文件格式: {ext}'}
 
         try:
-            if target_format == 'md':
-                if ext == '.md':
-                    with open(file_path, encoding='utf-8') as f:
-                        content = f.read()
-                    return {'success': True, 'outputPath': file_path, 'content': content}
-                return self.convert_to_markdown(file_path, ext, output_dir)
-
-            if ext == '.md':
-                return self.convert_from_markdown(file_path, target_format, output_dir)
-
-            if DirectConverter.can_direct_convert(ext, target_format):
-                return DirectConverter.convert(file_path, ext, target_format, output_dir)
-
-            md_result = self.convert_to_markdown(file_path, ext, output_dir)
-            if not md_result['success']:
-                return md_result
-
-            md_path = md_result['outputPath']
-            target_result = self.convert_from_markdown(md_path, target_format, output_dir)
-            if not target_result['success']:
-                return target_result
-
-            try:
-                os.remove(md_path)
-            except Exception:
-                pass
-
-            return target_result
-
+            return self.convert_to_markdown(file_path, ext, output_dir)
         except Exception as e:
             import traceback
             traceback.print_exc()
@@ -143,30 +112,6 @@ class ConversionHandler(BaseHTTPRequestHandler):
         except Exception:
             pass
         return {}
-
-    def convert_from_markdown(self, file_path, target_format, output_dir):
-        with open(file_path, 'r', encoding='utf-8') as f:
-            markdown_content = f.read()
-
-        base_name = os.path.splitext(os.path.basename(file_path))[0]
-        os.makedirs(output_dir, exist_ok=True)
-
-        if target_format == 'pdf':
-            output_path = os.path.join(output_dir, base_name + '.pdf')
-            self.markdown_converter.to_pdf(markdown_content, output_path)
-        elif target_format == 'docx':
-            output_path = os.path.join(output_dir, base_name + '.docx')
-            self.markdown_converter.to_docx(markdown_content, output_path)
-        elif target_format == 'html':
-            output_path = os.path.join(output_dir, base_name + '.html')
-            self.markdown_converter.to_html(markdown_content, output_path)
-        elif target_format == 'pptx':
-            output_path = os.path.join(output_dir, base_name + '.pptx')
-            self.markdown_converter.to_pptx(markdown_content, output_path)
-        else:
-            return {'success': False, 'error': f'不支持的目标格式: {target_format}'}
-
-        return {'success': True, 'outputPath': output_path}
 
 
 def run_server(port=8765):

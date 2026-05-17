@@ -12,7 +12,6 @@ import { FileItem, SelectedFile } from './types'
 function App() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [sourceFormat, setSourceFormat] = useState('auto')
-  const [targetFormat, setTargetFormat] = useState('md')
   const [outputPath, setOutputPath] = useState('')
   const [progress, setProgress] = useState(0)
   const [currentFile, setCurrentFile] = useState('')
@@ -115,7 +114,7 @@ function App() {
           const result = await window.electronAPI.convertFile(
             file.path,
             sourceFormat,
-            targetFormat,
+            'md',
             outputPath
           )
           setFiles(prev => prev.map(f =>
@@ -135,7 +134,7 @@ function App() {
     convertingRef.current = false
     if (timerRef.current) clearInterval(timerRef.current)
     setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
-  }, [files, sourceFormat, targetFormat, outputPath])
+  }, [files, sourceFormat, outputPath])
 
   const handleCancel = useCallback(() => {
     convertingRef.current = false
@@ -163,9 +162,7 @@ function App() {
       <div className="main-card">
         <DirectionSelect
           sourceFormat={sourceFormat}
-          targetFormat={targetFormat}
           onSourceChange={setSourceFormat}
-          onTargetChange={setTargetFormat}
         />
         <DropZone onFilesSelected={handleFilesSelected} onFilesSelectedViaDialog={handleFilesSelectedViaDialog} />
         <FileList files={files} onRemove={handleRemoveFile} />

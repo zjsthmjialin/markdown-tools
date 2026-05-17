@@ -95,7 +95,21 @@
       "Bash(python main.py)",
       "Bash(curl -s http://127.0.0.1:8765/)",
       "Bash(python test_conversions.py)",
-      "Bash(git commit *)"
+      "Bash(git commit *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(taskkill /F /IM node.exe)",
+      "Bash(taskkill /F /IM electron.exe)",
+      "Bash(taskkill /F /IM python.exe)",
+      "Bash(ping -n 10 127.0.0.1)",
+      "Bash(findstr \"5173 8765\")",
+      "Bash(tasklist)",
+      "Bash(findstr -i \"electron\")",
+      "Bash(curl -s http://127.0.0.1:5173/ -I)",
+      "Bash(./MarkAny.exe --disable-gpu --no-sandbox)",
+      "Bash(ping -n 5 127.0.0.1)",
+      "Bash(findstr -i \"markany electron\")",
+      "Bash(start \"\" MarkAny.exe)",
+      "Bash(findstr \"8765\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache"
