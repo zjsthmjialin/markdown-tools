@@ -9,3 +9,5 @@ __pycache__/
 test_output/
 src/test_output/
 src/python/portable-python/
+.DS_Store
+**/.DS_Store
