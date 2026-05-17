@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import './App.css'
 import Header from './components/Header'
 import DirectionSelect from './components/DirectionSelect'
@@ -13,17 +13,19 @@ function App() {
   const [files, setFiles] = useState<FileItem[]>([])
   const [sourceFormat, setSourceFormat] = useState('auto')
   const [targetFormat, setTargetFormat] = useState('md')
-  const [outputPath, setOutputPath] = useState(
-    'C:\\Users\\' + (process.env.USERNAME || 'User') + '\\Documents\\MarkAny'
-  )
+  const [outputPath, setOutputPath] = useState('')
   const [progress, setProgress] = useState(0)
   const [currentFile, setCurrentFile] = useState('')
   const [isConverting, setIsConverting] = useState(false)
+  const [elapsedTime, setElapsedTime] = useState(0)
+  const convertingRef = useRef(false)
+  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const handleFilesSelected = useCallback((newFiles: File[]) => {
     const fileItems: FileItem[] = newFiles.map((f, i) => ({
       id: `${Date.now()}-${i}`,
       name: f.name,
+      path: (f as any).path || f.name,
       size: f.size,
       extension: '.' + f.name.split('.').pop()?.toLowerCase(),
       status: 'pending' as const
@@ -36,66 +38,71 @@ function App() {
   }, [])
 
   const handleBrowse = useCallback(async () => {
-    // 在 Electron 环境中调用 API
     if (window.electronAPI?.selectDirectory) {
       const selected = await window.electronAPI.selectDirectory()
       if (selected) {
         setOutputPath(selected)
       }
     } else {
-      // 模拟选择目录
       alert('目录选择功能需要在 Electron 环境中使用')
     }
   }, [])
 
   const handleConvert = useCallback(async () => {
-    if (files.length === 0) return
-
+    if (convertingRef.current) return
+    convertingRef.current = true
     setIsConverting(true)
-    setFiles(prev => prev.map(f => ({ ...f, status: 'processing' as const, progress: 0 })))
+    setProgress(0)
+    setElapsedTime(0)
+    const startTime = Date.now()
+    timerRef.current = setInterval(() => {
+      setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
+    }, 1000)
 
-    const totalFiles = files.length
-    let completed = 0
+    // Capture current files synchronously to avoid stale closure
+    const currentFiles = files.map(f => ({ ...f, status: 'processing' as const }))
+    setFiles(currentFiles)
 
-    for (const file of files) {
+    if (currentFiles.length === 0) {
+      setIsConverting(false)
+      convertingRef.current = false
+      if (timerRef.current) clearInterval(timerRef.current)
+      return
+    }
+
+    const totalFiles = currentFiles.length
+
+    for (let i = 0; i < currentFiles.length; i++) {
+      const file = currentFiles[i]
       setCurrentFile(file.name)
+      setProgress(Math.round((i / totalFiles) * 100))
 
-      // 模拟转换进度
-      for (let i = 0; i <= 100; i += 20) {
-        setProgress(Math.round(((completed * 100 + i) / totalFiles)))
-        await new Promise(resolve => setTimeout(resolve, 200))
-      }
-
-      // 在 Electron 环境中调用实际转换 API
       if (window.electronAPI?.convertFile) {
         try {
           const result = await window.electronAPI.convertFile(
-            file.name,
+            file.path,
             sourceFormat,
-            targetFormat
+            targetFormat,
+            outputPath
           )
           setFiles(prev => prev.map(f =>
-            f.id === file.id ? { ...f, status: result.success ? 'completed' : 'error', progress: 100 } : f
+            f.id === file.id ? { ...f, status: result.success ? 'completed' : 'error', error: result.error } : f
           ))
-        } catch {
+        } catch (e) {
           setFiles(prev => prev.map(f =>
-            f.id === file.id ? { ...f, status: 'error', progress: 100 } : f
+            f.id === file.id ? { ...f, status: 'error', error: String(e) } : f
           ))
         }
-      } else {
-        // 模拟成功
-        setFiles(prev => prev.map(f =>
-          f.id === file.id ? { ...f, status: 'completed', progress: 100 } : f
-        ))
       }
-
-      completed++
     }
 
     setProgress(100)
     setCurrentFile('')
     setIsConverting(false)
-  }, [files, sourceFormat, targetFormat])
+    convertingRef.current = false
+    if (timerRef.current) clearInterval(timerRef.current)
+    setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
+  }, [files, sourceFormat, targetFormat, outputPath])
 
   return (
     <div className="app-container">
@@ -109,7 +116,7 @@ function App() {
         />
         <DropZone onFilesSelected={handleFilesSelected} />
         <FileList files={files} onRemove={handleRemoveFile} />
-        <ProgressBar progress={progress} currentFile={currentFile} />
+        <ProgressBar progress={progress} currentFile={currentFile} elapsedTime={elapsedTime} />
         <ActionBar
           outputPath={outputPath}
           onBrowse={handleBrowse}

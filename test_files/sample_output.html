@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+body { font-family: -apple-system, "Noto Sans SC", "Microsoft YaHei", sans-serif;
+        max-width: 800px; margin: 0 auto; padding: 20px; line-height: 1.8; }
+pre { background: #f5f5f5; padding: 16px; border-radius: 8px; overflow-x: auto; }
+code { font-family: "JetBrains Mono", "Consolas", monospace; }
+table { border-collapse: collapse; width: 100%; }
+th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+th { background: #f5f5f5; }
+img { max-width: 100%; }
+</style>
+</head>
+<body>
+<h1>MarkAny 转换器测试文档</h1>
+<h2>项目简介</h2>
+<p>MarkAny 是一个强大的文档格式转换工具，支持多种文件格式之间的互相转换。</p>
+<h2>功能特点</h2>
+<ul>
+<li><strong>多格式支持</strong>：PDF、Word、Excel、PPT、HTML、Markdown</li>
+<li><strong>批量转换</strong>：支持一次性转换多个文件</li>
+<li><strong>格式保持</strong>：尽量保持原始文档的排版格式</li>
+</ul>
+<h2>数据表格</h2>
+<table>
+<thead>
+<tr>
+<th>转换器</th>
+<th>输入格式</th>
+<th>输出格式</th>
+<th>状态</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PDFConverter</td>
+<td>.pdf</td>
+<td>.md</td>
+<td>已完成</td>
+</tr>
+<tr>
+<td>DocxConverter</td>
+<td>.docx</td>
+<td>.md</td>
+<td>已完成</td>
+</tr>
+<tr>
+<td>XlsxConverter</td>
+<td>.xlsx</td>
+<td>.md</td>
+<td>已完成</td>
+</tr>
+<tr>
+<td>PptxConverter</td>
+<td>.pptx</td>
+<td>.md</td>
+<td>已完成</td>
+</tr>
+<tr>
+<td>HtmlConverter</td>
+<td>.html</td>
+<td>.md</td>
+<td>已完成</td>
+</tr>
+</tbody>
+</table>
+<h2>代码示例</h2>
+<pre><code class="language-python">import sys
+sys.path.insert(0, 'src/python')
+from converters.pdf_converter import PDFConverter
+
+converter = PDFConverter()
+result = converter.to_markdown('test.pdf', './output')
+print(result)
+</code></pre>
+<h2>引用</h2>
+<blockquote>
+<p>MarkAny 致力于成为最好的文档转换工具。</p>
+</blockquote>
+<hr />
+<p><em>文档版本：v1.0 | 更新日期：2026-05-12</em></p>
+</body>
+</html>

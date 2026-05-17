@@ -1,65 +1,46 @@
-import sys
-import os
-sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), '..'))
 from converters.base import BaseConverter
 from ocr.tesseract_ocr import TesseractOCR
-from utils.image_extractor import ImageExtractor
-import pdfplumber
 import fitz
-import os
-import io
 
 class PDFConverter(BaseConverter):
     def __init__(self):
         self.ocr = TesseractOCR()
-        self.image_extractor = ImageExtractor()
 
     def get_supported_extensions(self) -> list[str]:
         return ['.pdf']
 
     def to_markdown(self, file_path: str, output_dir: str) -> str:
-        # 先尝试提取文本
-        markdown_content = self._extract_text_pdf(file_path)
+        doc = fitz.open(file_path)
+        try:
+            markdown_content = []
+            total_text = 0
 
-        # 如果文本内容过少，可能是扫描件，尝试 OCR
-        if self._is_likely_scanned(file_path):
-            markdown_content = self._extract_with_ocr(file_path)
-
-        return markdown_content
-
-    def _extract_text_pdf(self, file_path: str) -> str:
-        markdown_content = []
-
-        with pdfplumber.open(file_path) as pdf:
-            for page_num, page in enumerate(pdf.pages, 1):
-                text = page.extract_text() or ''
+            for page_num, page in enumerate(doc, 1):
+                text = page.get_text()
+                total_text += len(text)
                 if text.strip():
                     markdown_content.append(f"## 第 {page_num} 页\n")
                     markdown_content.append(text)
 
-        return '\n\n'.join(markdown_content)
+            # If almost no text, it's likely a scanned PDF — retry with OCR
+            if total_text < 100 and markdown_content:
+                return self._extract_with_ocr(file_path)
 
-    def _is_likely_scanned(self, file_path: str) -> bool:
-        with pdfplumber.open(file_path) as pdf:
-            total_text = sum(
-                len(page.extract_text() or '') for page in pdf.pages
-            )
-        return total_text < 100
+            return '\n\n'.join(markdown_content)
+        finally:
+            doc.close()
 
     def _extract_with_ocr(self, file_path: str) -> str:
         markdown_content = []
         doc = fitz.open(file_path)
-
-        for page_num, page in enumerate(doc, 1):
-            # 将页面转为图片
-            pix = page.get_pixmap(dpi=300)
-            img_bytes = pix.tobytes('png')
-
-            # OCR 识别
-            text = self.ocr.extract_text_from_image(img_bytes)
-
-            if text.strip():
-                markdown_content.append(f"## 第 {page_num} 页\n")
-                markdown_content.append(text)
-
+        try:
+            for page_num, page in enumerate(doc, 1):
+                pix = page.get_pixmap(dpi=300)
+                img_bytes = pix.tobytes('png')
+                text = self.ocr.extract_text_from_image(img_bytes)
+                if text.strip():
+                    markdown_content.append(f"## 第 {page_num} 页\n")
+                    markdown_content.append(text)
+        finally:
+            doc.close()
         return '\n\n'.join(markdown_content)

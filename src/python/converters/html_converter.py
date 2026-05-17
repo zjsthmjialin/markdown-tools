@@ -2,14 +2,13 @@ from .base import BaseConverter
 from bs4 import BeautifulSoup
 import html2text
 import os
-import re
 
 class HtmlConverter(BaseConverter):
     def get_supported_extensions(self) -> list[str]:
         return ['.html', '.htm']
 
     def to_markdown(self, file_path: str, output_dir: str) -> str:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             html_content = f.read()
 
         soup = BeautifulSoup(html_content, 'html.parser')
@@ -27,7 +26,7 @@ class HtmlConverter(BaseConverter):
         return h.handle(str(soup))
 
     def extract_images(self, file_path: str, output_dir: str) -> dict:
-        with open(file_path, 'r', encoding='utf-8') as f:
+        with open(file_path, 'r', encoding='utf-8', errors='replace') as f:
             html_content = f.read()
 
         soup = BeautifulSoup(html_content, 'html.parser')

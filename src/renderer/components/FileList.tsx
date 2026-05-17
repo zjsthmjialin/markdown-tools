@@ -45,6 +45,9 @@ export default function FileList({ files, onRemove }: FileListProps) {
               <div className="file-meta">
                 {formatSize(file.size)} · {getFormatName(file.extension)}
               </div>
+              {file.error && (
+                <div className="file-error">{file.error}</div>
+              )}
             </div>
             <div className="file-status">
               <span className={`status-dot ${file.status}`}></span>

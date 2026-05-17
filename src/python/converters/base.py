@@ -1,6 +1,15 @@
 from abc import ABC, abstractmethod
-from typing import Optional
-import os
+import re
+
+
+def sanitize_text(text: str) -> str:
+    """Remove NULL bytes and control characters invalid in XML/Markdown."""
+    # Remove NULL bytes
+    text = text.replace('\x00', '')
+    # Remove control characters except tab, newline, carriage return
+    text = re.sub(r'[\x01-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', text)
+    return text
+
 
 class BaseConverter(ABC):
     @abstractmethod
@@ -16,11 +25,3 @@ class BaseConverter(ABC):
     def extract_images(self, file_path: str, output_dir: str) -> dict:
         """提取文件中的图片，返回 {original_name: new_path}"""
         return {}
-
-    def get_file_info(self, file_path: str) -> dict:
-        """获取文件基本信息"""
-        return {
-            'name': os.path.basename(file_path),
-            'size': os.path.getsize(file_path),
-            'extension': os.path.splitext(file_path)[1]
-        }

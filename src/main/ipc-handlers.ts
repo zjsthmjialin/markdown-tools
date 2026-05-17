@@ -1,17 +1,45 @@
-import { ipcMain, dialog, BrowserWindow } from 'electron'
+import { ipcMain, dialog } from 'electron'
 import { spawn, ChildProcess } from 'child_process'
 import http from 'http'
 import path from 'path'
 
 let pythonProcess: ChildProcess | null = null
 
-export function startPythonService() {
-  // 获取Python脚本路径
-  const pythonScript = path.join(__dirname, '../../src/python/main.py')
+function waitForPythonService(maxRetries = 30, interval = 1000): Promise<void> {
+  return new Promise((resolve) => {
+    let retries = 0
+    const check = () => {
+      http.get('http://127.0.0.1:8765/', (res) => {
+        res.resume()
+        resolve()
+      }).on('error', () => {
+        retries++
+        if (retries >= maxRetries) {
+          console.error('[Python] Service failed to start after', maxRetries, 'retries')
+          resolve()
+        } else {
+          setTimeout(check, interval)
+        }
+      })
+    }
+    check()
+  })
+}
+
+export async function startPythonService() {
+  const isDev = process.env.NODE_ENV === 'development'
+  const resourcesPath = isDev
+    ? path.join(__dirname, '../../src/python')
+    : path.join(process.resourcesPath!, 'python')
+
+  const pythonScript = path.join(resourcesPath, 'main.py')
+
+  console.log('[Python] Starting service...')
+  console.log('[Python] Script path:', pythonScript)
 
   pythonProcess = spawn('python', [pythonScript], {
     stdio: ['pipe', 'pipe', 'pipe'],
-    cwd: path.join(__dirname, '../../src/python')
+    cwd: resourcesPath
   })
 
   pythonProcess.stdout?.on('data', (data) => {
@@ -24,9 +52,16 @@ export function startPythonService() {
 
   pythonProcess.on('error', (err) => {
     console.error('Failed to start Python service:', err)
+    pythonProcess = null
   })
 
-  console.log('Python conversion service starting...')
+  pythonProcess.on('exit', (code) => {
+    console.error('[Python] Process exited with code', code)
+    pythonProcess = null
+  })
+
+  await waitForPythonService()
+  console.log('[Python] Service ready')
 }
 
 // 通过HTTP与Python服务通信
@@ -37,10 +72,11 @@ async function callPythonService(data: {
   outputDir?: string
 }): Promise<{ success: boolean; outputPath?: string; error?: string; content?: string }> {
   return new Promise((resolve) => {
+    let resolved = false
     const postData = JSON.stringify(data)
 
     const options = {
-      hostname: 'localhost',
+      hostname: '127.0.0.1',
       port: 8765,
       path: '/',
       method: 'POST',
@@ -50,46 +86,45 @@ async function callPythonService(data: {
       }
     }
 
+    const timeout = setTimeout(() => {
+      if (!resolved) {
+        resolved = true
+        req.destroy()
+        resolve({ success: false, error: '请求超时' })
+      }
+    }, 300000)
+
     const req = http.request(options, (res) => {
       let data = ''
       res.on('data', (chunk) => { data += chunk })
       res.on('end', () => {
-        try {
-          const result = JSON.parse(data)
-          resolve(result)
-        } catch (e) {
-          resolve({ success: false, error: 'Invalid response from Python service' })
+        if (!resolved) {
+          resolved = true
+          clearTimeout(timeout)
+          try {
+            const result = JSON.parse(data)
+            resolve(result)
+          } catch (e) {
+            resolve({ success: false, error: 'Invalid response from Python service' })
+          }
         }
       })
     })
 
     req.on('error', (e) => {
-      resolve({ success: false, error: `连接Python服务失败: ${e.message}` })
+      if (!resolved) {
+        resolved = true
+        clearTimeout(timeout)
+        resolve({ success: false, error: `连接Python服务失败: ${e.message}` })
+      }
     })
 
     req.write(postData)
     req.end()
-
-    // 超时处理
-    setTimeout(() => {
-      req.destroy()
-      resolve({ success: false, error: '请求超时' })
-    }, 60000)
   })
 }
 
 export function setupIpcHandlers() {
-  // 选择文件
-  ipcMain.handle('select-files', async () => {
-    const result = await dialog.showOpenDialog({
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Documents', extensions: ['pdf', 'docx', 'xlsx', 'pptx', 'html', 'txt', 'md'] }
-      ]
-    })
-    return result.filePaths
-  })
-
   // 选择目录
   ipcMain.handle('select-directory', async () => {
     const result = await dialog.showOpenDialog({
@@ -101,6 +136,7 @@ export function setupIpcHandlers() {
   // 转换文件
   ipcMain.handle('convert-file', async (_event, filePath: string, sourceFormat: string, targetFormat: string, outputDir?: string) => {
     console.log(`Converting: ${filePath} (${sourceFormat} -> ${targetFormat})`)
+    if (outputDir) console.log(`Output dir: ${outputDir}`)
 
     try {
       const result = await callPythonService({
@@ -110,29 +146,12 @@ export function setupIpcHandlers() {
         outputDir
       })
 
+      console.log(`Result: success=${result.success}, error=${result.error || 'none'}`)
       return result
     } catch (error) {
+      console.error(`Convert error:`, error)
       return { success: false, error: String(error) }
     }
-  })
-
-  // 健康检查
-  ipcMain.handle('check-python-service', async () => {
-    return new Promise((resolve) => {
-      http.get('http://localhost:8765/', (res) => {
-        let data = ''
-        res.on('data', (chunk) => { data += chunk })
-        res.on('end', () => {
-          try {
-            resolve({ status: 'ok', ...JSON.parse(data) })
-          } catch {
-            resolve({ status: 'ok' })
-          }
-        })
-      }).on('error', () => {
-        resolve({ status: 'not running' })
-      })
-    })
   })
 }
 

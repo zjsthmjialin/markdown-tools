@@ -1,6 +1,5 @@
 from .base import BaseConverter
 from docx import Document
-import re
 
 class DocxConverter(BaseConverter):
     def get_supported_extensions(self) -> list[str]:

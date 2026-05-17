@@ -132,6 +132,13 @@
   margin-top: 2px;
 }
 
+.file-error {
+  font-size: 11px;
+  color: #f44336;
+  margin-top: 4px;
+  word-break: break-all;
+}
+
 .file-status {
   display: flex;
   align-items: center;
@@ -368,6 +375,17 @@
   margin-bottom: 10px;
   font-size: 13px;
   color: #ccc;
+}
+
+.progress-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.elapsed-time {
+  color: #4a9eff;
+  font-variant-numeric: tabular-nums;
 }
 
 .progress-bar {

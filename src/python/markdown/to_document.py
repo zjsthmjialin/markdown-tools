@@ -1,7 +1,6 @@
 import re
 import os
-import subprocess
-import json
+from xml.sax.saxutils import escape as xml_escape
 
 # Use 'markdown' PyPI library via subprocess to avoid name collision
 # with local 'markdown' package (src/python/markdown/).
@@ -14,6 +13,8 @@ def _render_markdown_to_html(md_text: str) -> str:
     """Render Markdown to HTML using the PyPI markdown library, avoiding
     the namespace collision with our local markdown package."""
     import sys
+    import codecs
+
     # Save and remove ALL markdown-related modules from sys.modules
     _saved = {}
     for key in list(sys.modules.keys()):
@@ -32,6 +33,10 @@ def _render_markdown_to_html(md_text: str) -> str:
         import markdown as _md_lib
         result = _md_lib.markdown(md_text, extensions=['tables', 'fenced_code'])
         return result
+    except UnicodeDecodeError:
+        # Fallback: try to clean the input text
+        cleaned = md_text.encode('utf-8', errors='replace').decode('utf-8', errors='replace')
+        return _md_lib.markdown(cleaned, extensions=['tables', 'fenced_code'])
     finally:
         # Restore everything
         sys.path = _orig_path
@@ -94,7 +99,7 @@ class MarkdownToDocument:
             heading = re.match(r'^(#{1,6})\s+(.+)$', line)
             if heading:
                 level = len(heading.group(1))
-                text = heading.group(2)
+                text = xml_escape(heading.group(2))
                 style = [styles['CNH3'], styles['CNH3'], styles['CNH3'],
                           styles['CNH2'], styles['CNH1'], styles['CNH1']][min(level, 6) - 1]
                 elements.append(Paragraph(text, style))
@@ -102,7 +107,7 @@ class MarkdownToDocument:
 
             # 列表
             if re.match(r'^[-*]\s+', line):
-                elements.append(Paragraph(f'• {line[2:]}', styles['CNBody']))
+                elements.append(Paragraph(f'• {xml_escape(line[2:])}', styles['CNBody']))
                 continue
 
             # 表格分隔行跳过
@@ -112,17 +117,19 @@ class MarkdownToDocument:
             # 表格行
             if line.startswith('|'):
                 cells = [c.strip() for c in line.split('|')[1:-1]]
-                row_text = ' | '.join(cells)
+                row_text = ' | '.join(xml_escape(c) for c in cells)
                 elements.append(Paragraph(row_text, styles['CNBody']))
                 continue
 
             # 普通段落
-            elements.append(Paragraph(line, styles['CNBody']))
+            elements.append(Paragraph(xml_escape(line), styles['CNBody']))
 
         if elements:
             doc.build(elements)
 
     def to_docx(self, markdown_content: str, output_path: str) -> None:
+        # Clean control characters that break XML
+        markdown_content = re.sub(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]', '', markdown_content)
         doc = Document()
 
         lines = markdown_content.split('\n')
@@ -157,12 +164,92 @@ class MarkdownToDocument:
                 continue
 
             if line.startswith('|'):
+                # Skip separator rows
+                if re.match(r'^\|[-\s|]+\|$', line):
+                    continue
+                # Render table rows as text
+                cells = [c.strip() for c in line.split('|')[1:-1]]
+                doc.add_paragraph(' | '.join(cells))
                 continue
 
             if line.strip():
                 doc.add_paragraph(line)
 
         doc.save(output_path)
+
+    def to_pptx(self, markdown_content: str, output_path: str) -> None:
+        """Convert Markdown to PPTX. Each H1 starts a new slide."""
+        from pptx import Presentation
+        from pptx.util import Inches, Pt, Emu
+
+        prs = Presentation()
+        prs.slide_width = Inches(13.333)
+        prs.slide_height = Inches(7.5)
+
+        # Split content by H1 headings into slides
+        sections = re.split(r'\n(?=^#\s)', markdown_content, flags=re.MULTILINE)
+
+        for section in sections:
+            lines = section.strip().split('\n')
+            if not lines:
+                continue
+
+            slide_layout = prs.slide_layouts[6]  # blank layout
+            slide = prs.slides.add_slide(slide_layout)
+
+            left = Inches(1)
+            top = Inches(0.5)
+            width = Inches(11.333)
+            height = Inches(6.5)
+
+            textbox = slide.shapes.add_textbox(left, top, width, height)
+            tf = textbox.text_frame
+            tf.word_wrap = True
+
+            first = True
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+
+                h_match = re.match(r'^(#{1,6})\s+(.+)$', line)
+                if h_match:
+                    level = len(h_match.group(1))
+                    text = h_match.group(2)
+                    p = tf.add_paragraph() if not first else tf.paragraphs[0]
+                    first = False
+                    p.text = text
+                    if level == 1:
+                        p.font.size = Pt(36)
+                        p.font.bold = True
+                    elif level == 2:
+                        p.font.size = Pt(28)
+                        p.font.bold = True
+                    else:
+                        p.font.size = Pt(22)
+                        p.font.bold = True
+                    p.space_after = Pt(12)
+                    continue
+
+                if re.match(r'^[-*]\s+', line):
+                    p = tf.add_paragraph() if not first else tf.paragraphs[0]
+                    first = False
+                    p.text = f'  {line[2:]}'
+                    p.font.size = Pt(18)
+                    p.space_after = Pt(6)
+                    continue
+
+                if line.startswith('|'):
+                    continue  # skip tables in PPT for simplicity
+
+                # Regular paragraph
+                p = tf.add_paragraph() if not first else tf.paragraphs[0]
+                first = False
+                p.text = line
+                p.font.size = Pt(18)
+                p.space_after = Pt(8)
+
+        prs.save(output_path)
 
     def to_html(self, markdown_content: str, output_path: str) -> None:
         html_content = self._markdown_to_html(markdown_content)

@@ -18,7 +18,8 @@ export default function DirectionSelect({
     { value: 'xlsx', label: 'Excel 表格' },
     { value: 'pptx', label: 'PowerPoint' },
     { value: 'html', label: 'HTML 网页' },
-    { value: 'txt', label: '纯文本' }
+    { value: 'txt', label: '纯文本' },
+    { value: 'md', label: 'Markdown' }
   ]
 
   const getTargetOptions = () => {
@@ -26,6 +27,7 @@ export default function DirectionSelect({
       return [
         { value: 'pdf', label: 'PDF 文档' },
         { value: 'docx', label: 'Word 文档' },
+        { value: 'pptx', label: 'PowerPoint' },
         { value: 'html', label: 'HTML 网页' }
       ]
     }
@@ -33,6 +35,7 @@ export default function DirectionSelect({
       { value: 'md', label: 'Markdown' },
       { value: 'pdf', label: 'PDF 文档' },
       { value: 'docx', label: 'Word 文档' },
+      { value: 'pptx', label: 'PowerPoint' },
       { value: 'html', label: 'HTML 网页' }
     ]
   }

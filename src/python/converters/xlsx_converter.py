@@ -1,10 +1,9 @@
 from .base import BaseConverter
 from openpyxl import load_workbook
-import os
 
 class XlsxConverter(BaseConverter):
     def get_supported_extensions(self) -> list[str]:
-        return ['.xlsx', '.xls']
+        return ['.xlsx']
 
     def to_markdown(self, file_path: str, output_dir: str) -> str:
         wb = load_workbook(file_path, data_only=True)

@@ -14,10 +14,12 @@ files:
   - "!**/__pycache__"
 
 extraResources:
-  - from: python/
+  - from: src/python/
     to: python/
     filter:
       - "**/*"
+      - "!**/__pycache__"
+      - "!**/*.pyc"
 
 win:
   target:
