@@ -36,7 +36,7 @@ export default function DirectionSelect({
       <div className="direction-group">
         <div className="direction-label">目标格式</div>
         <div className="select-wrapper">
-          <select disabled>
+          <select disabled className="target-select">
             <option value="md">Markdown</option>
           </select>
         </div>

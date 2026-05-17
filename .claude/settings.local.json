@@ -109,7 +109,9 @@
       "Bash(ping -n 5 127.0.0.1)",
       "Bash(findstr -i \"markany electron\")",
       "Bash(start \"\" MarkAny.exe)",
-      "Bash(findstr \"8765\")"
+      "Bash(findstr \"8765\")",
+      "Bash(ping -n 6 127.0.0.1)",
+      "Bash(findstr \"517\")"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache"

@@ -3,7 +3,7 @@ interface ActionBarProps {
   onBrowse: () => void
   onConvert: () => void
   onCancel: () => void
-  onReset: () => void
+  onClearCompleted: () => void
   disabled: boolean
   isConverting: boolean
   hasCompleted: boolean
@@ -14,7 +14,7 @@ export default function ActionBar({
   onBrowse,
   onConvert,
   onCancel,
-  onReset,
+  onClearCompleted,
   disabled,
   isConverting,
   hasCompleted
@@ -22,11 +22,11 @@ export default function ActionBar({
   return (
     <div className="action-bar">
       <div className="output-path">
-        <span className="output-label">输出目录:</span>
+        <span className="output-label">输出:</span>
         <input
           type="text"
           className="output-input"
-          value={outputPath}
+          value={outputPath || '默认位置：原文件目录'}
           readOnly
         />
         <button className="btn-browse" onClick={onBrowse}>
@@ -38,9 +38,14 @@ export default function ActionBar({
           取消
         </button>
       ) : hasCompleted ? (
-        <button className="btn-reset" onClick={onReset}>
-          重置
-        </button>
+        <div className="action-buttons">
+          <button className="btn-clear" onClick={onClearCompleted}>
+            清除已完成
+          </button>
+          <button className="btn-reset" onClick={onBrowse}>
+            重置
+          </button>
+        </div>
       ) : (
         <button
           className="btn-primary"

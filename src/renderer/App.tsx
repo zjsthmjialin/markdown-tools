@@ -146,14 +146,8 @@ function App() {
     ))
   }, [])
 
-  const handleReset = useCallback(() => {
-    setFiles([])
-    setProgress(0)
-    setCurrentFile('')
-    setElapsedTime(0)
-    setIsConverting(false)
-    convertingRef.current = false
-    if (timerRef.current) clearInterval(timerRef.current)
+  const handleClearCompleted = useCallback(() => {
+    setFiles(prev => prev.filter(f => f.status !== 'completed'))
   }, [])
 
   return (
@@ -172,10 +166,10 @@ function App() {
           onBrowse={handleBrowse}
           onConvert={handleConvert}
           onCancel={handleCancel}
-          onReset={handleReset}
+          onClearCompleted={handleClearCompleted}
           disabled={files.length === 0 || isConverting}
           isConverting={isConverting}
-          hasCompleted={files.length > 0 && files.every(f => f.status === 'completed' || f.status === 'error')}
+          hasCompleted={files.some(f => f.status === 'completed')}
         />
         <Tip />
       </div>

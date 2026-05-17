@@ -8,7 +8,7 @@ describe('ActionBar', () => {
     onBrowse: vi.fn(),
     onConvert: vi.fn(),
     onCancel: vi.fn(),
-    onReset: vi.fn(),
+    onClearCompleted: vi.fn(),
     disabled: false,
     isConverting: false,
     hasCompleted: false
@@ -30,8 +30,9 @@ describe('ActionBar', () => {
     expect(screen.queryByText('开始转换')).not.toBeInTheDocument()
   })
 
-  it('shows reset button after completion', () => {
+  it('shows clear completed and reset buttons after completion', () => {
     render(<ActionBar {...defaultProps} hasCompleted={true} />)
+    expect(screen.getByText('清除已完成')).toBeInTheDocument()
     expect(screen.getByText('重置')).toBeInTheDocument()
     expect(screen.queryByText('开始转换')).not.toBeInTheDocument()
   })
@@ -50,10 +51,17 @@ describe('ActionBar', () => {
     expect(onCancel).toHaveBeenCalled()
   })
 
-  it('calls onReset when reset button clicked', () => {
-    const onReset = vi.fn()
-    render(<ActionBar {...defaultProps} hasCompleted={true} onReset={onReset} />)
+  it('calls onClearCompleted when clear button clicked', () => {
+    const onClearCompleted = vi.fn()
+    render(<ActionBar {...defaultProps} hasCompleted={true} onClearCompleted={onClearCompleted} />)
+    fireEvent.click(screen.getByText('清除已完成'))
+    expect(onClearCompleted).toHaveBeenCalled()
+  })
+
+  it('calls onBrowse when reset button clicked', () => {
+    const onBrowse = vi.fn()
+    render(<ActionBar {...defaultProps} hasCompleted={true} onBrowse={onBrowse} />)
     fireEvent.click(screen.getByText('重置'))
-    expect(onReset).toHaveBeenCalled()
+    expect(onBrowse).toHaveBeenCalled()
   })
 })
