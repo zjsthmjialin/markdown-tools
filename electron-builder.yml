@@ -17,6 +17,10 @@ extraResources:
     to: python-backend/markany-backend.exe
     filter:
       - "**/*"
+  - from: src/python/tesseract-portable
+    to: python-backend/tesseract
+    filter:
+      - "**/*"
   - from: src/python/
     to: python-source/
     filter:
@@ -27,6 +31,7 @@ extraResources:
       - "!**/*.pyc"
       - "!dist/**"
       - "!build/**"
+      - "!tesseract-portable/**"
       - "!*.spec"
 
 win:

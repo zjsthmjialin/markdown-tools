@@ -46,10 +46,20 @@ class ConversionHandler(BaseHTTPRequestHandler):
             self.wfile.write(json.dumps(error_result, ensure_ascii=False).encode('utf-8'))
 
     def do_GET(self):
+        ocr_status = 'unknown'
+        pdf_converter = self.converters.get('.pdf')
+        if pdf_converter and hasattr(pdf_converter, 'ocr') and pdf_converter.ocr:
+            ocr_status = 'available' if pdf_converter.ocr.available else 'unavailable'
+        elif pdf_converter and pdf_converter.ocr is False:
+            ocr_status = 'unavailable'
+
         self.send_response(200)
         self.send_header('Content-Type', 'application/json')
         self.end_headers()
-        self.wfile.write(json.dumps({'status': 'ok'}).encode())
+        self.wfile.write(json.dumps({
+            'status': 'ok',
+            'ocr': ocr_status
+        }).encode())
 
     def process_conversion(self, data):
         file_path = data.get('filePath')

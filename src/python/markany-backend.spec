@@ -8,19 +8,38 @@ block_cipher = None
 # Get the directory where this spec file is located
 script_dir = os.path.dirname(os.path.abspath(SPEC))
 
+# Collect magika model data needed by markitdown for file type detection
+def _collect_magika_data():
+    datas = []
+    try:
+        import magika
+        magika_dir = os.path.dirname(magika.__file__)
+        models_dir = os.path.join(magika_dir, 'models')
+        config_dir = os.path.join(magika_dir, 'config')
+        if os.path.isdir(models_dir):
+            datas.append((models_dir, 'magika/models'))
+        if os.path.isdir(config_dir):
+            datas.append((config_dir, 'magika/config'))
+    except ImportError:
+        pass
+    return datas
+
 a = Analysis(
     [os.path.join(script_dir, 'main.py')],
     pathex=[script_dir],
     binaries=[],
-    datas=[],
+    datas=_collect_magika_data(),
     hiddenimports=[
         'http.server',
         'converters.markitdown_converter',
         'converters.pdf_converter',
         'utils.image_extractor',
+        'ocr.tesseract_ocr',
         'markitdown',
         'pymupdf',
         'PIL',
+        'pytesseract',
+        'magika',
     ],
     hookspath=[],
     hooksconfig={},

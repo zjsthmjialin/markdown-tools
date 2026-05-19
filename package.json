@@ -6,8 +6,9 @@
   "scripts": {
     "dev": "vite",
     "python:build": "cd src/python && pyinstaller markany-backend.spec --clean --noconfirm",
-    "build": "npm run python:build && tsc && vite build && electron-builder --win",
-    "build:dir": "npm run python:build && tsc && vite build && electron-builder --win --dir",
+    "build": "npm run tesseract:setup && npm run python:build && tsc && vite build && electron-builder --win",
+    "build:dir": "npm run tesseract:setup && npm run python:build && tsc && vite build && electron-builder --win --dir",
+    "tesseract:setup": "bash src/python/setup_tesseract.sh",
     "build:no-python": "tsc && vite build && electron-builder --win --dir",
     "preview": "vite preview",
     "test": "vitest run",

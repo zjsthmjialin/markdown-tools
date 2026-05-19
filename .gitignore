@@ -7,3 +7,7 @@ release/
 __pycache__/
 test_output/
 src/test_output/
+src/python/tesseract-portable/
+src/python/dist/
+src/python/build/
+src/python/*.spec.lock
