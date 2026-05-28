@@ -40,6 +40,8 @@ a = Analysis(
         'PIL',
         'pytesseract',
         'magika',
+        'cv2',
+        'numpy',
     ],
     hookspath=[],
     hooksconfig={},

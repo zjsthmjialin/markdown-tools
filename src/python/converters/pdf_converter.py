@@ -1,5 +1,51 @@
 from converters.base import BaseConverter, sanitize_text
 import fitz
+import io
+import cv2
+import numpy as np
+from PIL import Image
+
+
+def enhance_scan_image(pil_image: Image.Image) -> Image.Image:
+    """
+    自适应图像增强，专为扫描件 OCR 预处理设计。
+    根据图像实际内容自动调整，无需手动指定参数。
+
+    处理步骤：
+    1. 转为灰度（如果是彩色图像）
+    2. 自适应去噪
+    3. CLAHE 自适应对比度增强
+    4. 自适应二值化
+    """
+    try:
+        img = np.array(pil_image)
+
+        # 1. 转灰度
+        if len(img.shape) == 3:
+            gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        else:
+            gray = img
+
+        # 2. 自适应去噪（保留文字边缘）
+        denoised = cv2.fastNlMeansDenoising(gray, h=10, templateWindowSize=7, searchWindowSize=21)
+
+        # 3. CLAHE 自适应对比度增强（根据局部区域自动调整，不过曝）
+        clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
+        enhanced = clahe.apply(denoised)
+
+        # 4. 自适应二值化（比全局阈值更智能，适应不均匀光照）
+        binary = cv2.adaptiveThreshold(
+            enhanced, 255,
+            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+            cv2.THRESH_BINARY,
+            blockSize=11,
+            C=2
+        )
+
+        return Image.fromarray(binary)
+    except Exception as e:
+        print(f"[警告] 图像增强失败，使用原图: {e}")
+        return pil_image
 
 
 class PDFConverter(BaseConverter):
@@ -50,7 +96,10 @@ class PDFConverter(BaseConverter):
                     try:
                         pix = page.get_pixmap(dpi=300)
                         img_bytes = pix.tobytes('png')
-                        text = self.ocr.extract_text_from_image(img_bytes)
+                        pil_img = enhance_scan_image(Image.open(io.BytesIO(img_bytes)))
+                        buf = io.BytesIO()
+                        pil_img.save(buf, format='PNG')
+                        text = self.ocr.extract_text_from_image(buf.getvalue())
                     except Exception as e:
                         markdown_content.append(f"## Page {page_num}\n")
                         markdown_content.append(f"[OCR error on this page: {e}]")
@@ -99,7 +148,10 @@ class PDFConverter(BaseConverter):
                 pix = page.get_pixmap(dpi=300)
                 img_bytes = pix.tobytes('png')
                 try:
-                    text = ocr.extract_text_from_image(img_bytes)
+                    pil_img = enhance_scan_image(Image.open(io.BytesIO(img_bytes)))
+                    buf = io.BytesIO()
+                    pil_img.save(buf, format='PNG')
+                    text = ocr.extract_text_from_image(buf.getvalue())
                 except Exception as e:
                     markdown_content.append(f"## Page {page_num}\n")
                     markdown_content.append(f"[OCR error on this page: {e}]")
