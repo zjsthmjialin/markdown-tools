@@ -91,10 +91,7 @@ class TesseractOCR:
 
     @property
     def _tesseract_config(self) -> str:
-        """Build config string with explicit tessdata-dir if available."""
         cfg = '--psm 6'
-        if self._tessdata_dir:
-            cfg += f' --tessdata-dir "{self._tessdata_dir}"'
         return cfg
 
     def _check_availability(self) -> bool:
