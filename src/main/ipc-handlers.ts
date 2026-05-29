@@ -113,7 +113,7 @@ async function callPythonService(data: {
         req.destroy()
         resolve({ success: false, error: '请求超时' })
       }
-    }, 300000)
+    }, 1800000)
 
     const req = http.request(options, (res) => {
       let data = ''
