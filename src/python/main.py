@@ -64,6 +64,7 @@ class ConversionHandler(BaseHTTPRequestHandler):
     def process_conversion(self, data):
         file_path = data.get('filePath')
         target_format = data.get('targetFormat', 'md')
+        options = data.get('options', {})
 
         if not file_path or not os.path.exists(file_path):
             return {'success': False, 'error': f'文件不存在: {file_path}'}
@@ -79,13 +80,13 @@ class ConversionHandler(BaseHTTPRequestHandler):
             return {'success': False, 'error': f'不支持的文件格式: {ext}'}
 
         try:
-            return self.convert_to_markdown(file_path, ext, output_dir)
+            return self.convert_to_markdown(file_path, ext, output_dir, options)
         except Exception as e:
             import traceback
             traceback.print_exc()
             return {'success': False, 'error': f'转换失败: {str(e)}'}
 
-    def convert_to_markdown(self, file_path, ext, output_dir):
+    def convert_to_markdown(self, file_path, ext, output_dir, options=None):
         converter = self.converters.get(ext)
         if not converter:
             return {'success': False, 'error': f'不支持的格式: {ext}'}
@@ -94,7 +95,7 @@ class ConversionHandler(BaseHTTPRequestHandler):
         base_name = os.path.splitext(os.path.basename(file_path))[0]
         output_path = os.path.join(output_dir, base_name + '.md')
 
-        markdown_content = converter.to_markdown(file_path, output_dir)
+        markdown_content = converter.to_markdown(file_path, output_dir, options)
 
         # Extract embedded images from the source document
         image_map = self._extract_images(file_path, ext, output_dir)

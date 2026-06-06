@@ -208,7 +208,8 @@
       "Bash(claude plugin *)",
       "Bash(mkdir -p \"d:/Projects/markdown-tools/mcp-server/src\")",
       "Bash(python -c \"import cv2; import numpy; import PIL; print\\('OpenCV:', cv2.__version__\\); print\\('NumPy:', numpy.__version__\\); print\\('Pillow:', PIL.__version__\\)\")",
-      "Bash(cp -r /d/Projects/markdown-tools /d/Projects/markdown-tools-backup-20260606)"
+      "Bash(cp -r /d/Projects/markdown-tools /d/Projects/markdown-tools-backup-20260606)",
+      "Bash(PYTHONIOENCODING=utf-8 python -c ' *)"
     ],
     "additionalDirectories": [
       "C:\\Users\\jackt\\AppData\\Local\\electron\\Cache",

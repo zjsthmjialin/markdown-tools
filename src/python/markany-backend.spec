@@ -42,6 +42,7 @@ a = Analysis(
         'magika',
         'cv2',
         'numpy',
+        'html2text',
     ],
     hookspath=[],
     hooksconfig={},

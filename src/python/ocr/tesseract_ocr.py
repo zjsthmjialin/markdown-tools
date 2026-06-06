@@ -6,22 +6,27 @@ import io
 
 
 def _find_bundled_tesseract() -> str | None:
-    """Locate tesseract.exe bundled alongside this application."""
+    """Locate tesseract.exe bundled alongside this application.
+    支持三种部署环境：PyInstaller _MEIPASS 临时目录、frozen 可执行文件旁、开发环境。"""
     candidates = []
 
-    # 1. Relative to PyInstaller executable (production)
+    # 0. 显式环境变量（最高优先级）
+    env_path = os.environ.get('TESSERACT_PATH')
+    if env_path:
+        candidates.append(os.path.abspath(env_path))
+
+    # 1. PyInstaller _MEIPASS 临时释放目录（单文件模式）
+    if hasattr(sys, '_MEIPASS'):
+        candidates.append(os.path.join(sys._MEIPASS, 'tesseract', 'tesseract.exe'))
+
+    # 2. PyInstaller frozen 可执行文件所在目录（生产环境 — extraResources）
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)
         candidates.append(os.path.join(exe_dir, 'tesseract', 'tesseract.exe'))
 
-    # 2. Relative to this source file (development)
+    # 3. 相对于本源文件（开发环境）
     this_dir = os.path.dirname(os.path.abspath(__file__))
     candidates.append(os.path.join(this_dir, '..', 'tesseract-portable', 'tesseract.exe'))
-
-    # 3. Check TESSERACT_PATH env var
-    env_path = os.environ.get('TESSERACT_PATH')
-    if env_path:
-        candidates.insert(0, env_path)
 
     for path in candidates:
         normalized = os.path.normpath(os.path.abspath(path))
@@ -32,21 +37,26 @@ def _find_bundled_tesseract() -> str | None:
 
 
 def _find_bundled_tessdata(tesseract_exe: str) -> str | None:
-    """Find tessdata directory bundled alongside the tesseract executable."""
+    """Find tessdata directory bundled alongside the tesseract executable.
+    支持三种部署环境查找 tessdata 语言包目录。"""
     candidates = []
 
-    # 1. tessdata/ directory next to tesseract.exe
+    # 0. 显式环境变量（最高优先级）
+    env_tessdata = os.environ.get('TESSDATA_PREFIX')
+    if env_tessdata:
+        candidates.append(os.path.abspath(env_tessdata))
+
+    # 1. PyInstaller _MEIPASS 临时释放目录
+    if hasattr(sys, '_MEIPASS'):
+        candidates.append(os.path.join(sys._MEIPASS, 'tesseract', 'tessdata'))
+
+    # 2. tesseract.exe 同级 tessdata/ 目录
     tesseract_dir = os.path.dirname(tesseract_exe)
     candidates.append(os.path.join(tesseract_dir, 'tessdata'))
 
-    # 2. One level up (if tesseract is in a subdirectory)
+    # 3. 上级目录中的 tessdata/（如果 tesseract 在子目录中）
     parent_dir = os.path.dirname(tesseract_dir)
     candidates.append(os.path.join(parent_dir, 'tessdata'))
-
-    # 3. From TESSDATA_PREFIX env var
-    env_tessdata = os.environ.get('TESSDATA_PREFIX')
-    if env_tessdata:
-        candidates.insert(0, env_tessdata)
 
     for path in candidates:
         normalized = os.path.normpath(os.path.abspath(path))
