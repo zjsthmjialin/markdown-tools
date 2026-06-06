@@ -1,6 +1,6 @@
 {
   "name": "markany",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "文档双向转换工具",
   "main": "dist-electron/main/index.js",
   "scripts": {
