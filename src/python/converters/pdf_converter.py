@@ -264,7 +264,11 @@ class PDFConverter(BaseConverter):
                         span_font, span_flags, body_font, body_size,
                         span.get("size", 0)
                     )
-                    is_italic = bool(span_flags & (1 << 1))
+                    # 斜体检测：flags 位 + 字体名（楷体/仿宋/Italic）
+                    is_italic = PDFConverter._is_italic_span(
+                        span_font, span_flags, body_font, body_size,
+                        span.get("size", 0)
+                    )
 
                     if is_bold and is_italic:
                         parts.append(f"***{text.strip()}***")
@@ -332,6 +336,24 @@ class PDFConverter(BaseConverter):
             if any(kw in lower for kw in ('light', 'thin', 'italic',
                                            'song', 'kai', 'fs', 'fangsong')):
                 return False
+            return True
+
+        return False
+
+    @staticmethod
+    def _is_italic_span(font_name: str, flags: int, body_font: str,
+                         body_size: float, span_size: float) -> bool:
+        """判断 span 是否为斜体。
+        中文排版中楷体/仿宋用途广泛（引言、图注、目录等），不能一律视为斜体，
+        因此仅通过 flags 位和明确的 italic 字体名检测。"""
+        lower = font_name.lower()
+
+        # 方式1：flags bit 1 标记（标准斜体标记）
+        if flags & (1 << 1):
+            return True
+
+        # 方式2：字体名包含明确的斜体关键词
+        if any(kw in lower for kw in ('italic', 'oblique')):
             return True
 
         return False
