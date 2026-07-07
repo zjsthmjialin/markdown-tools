@@ -1,4 +1,4 @@
-﻿node_modules/
+node_modules/
 dist/
 dist-electron/
 build/
@@ -11,3 +11,11 @@ src/python/tesseract-portable/
 src/python/dist/
 src/python/build/
 src/python/*.spec.lock
+
+# 生成的转换产物（test_files/ 下的样例输入保留，输出忽略）
+test_files/output/
+test_files/*_output.*
+
+# 本地/编辑器配置
+.claude/settings.local.json
+.pytest_cache/
