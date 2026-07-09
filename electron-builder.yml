@@ -13,8 +13,10 @@ files:
   - "!**/*.pyc"
 
 extraResources:
-  - from: src/python/dist/markany-backend.exe
-    to: python-backend/markany-backend.exe
+  # onedir PyInstaller output: copy the whole folder (exe + _internal libs) into
+  # python-backend/, so the exe still lands at python-backend/markany-backend.exe
+  - from: src/python/dist/markany-backend
+    to: python-backend
     filter:
       - "**/*"
   - from: src/python/tesseract-portable

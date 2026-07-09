@@ -19,3 +19,6 @@ test_files/*_output.*
 # 本地/编辑器配置
 .claude/settings.local.json
 .pytest_cache/
+
+# 日志与临时诊断输出
+*.log

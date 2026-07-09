@@ -47,7 +47,10 @@ a = Analysis(
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    # Exclude chardet: its mypyc-compiled .pyd modules crash (0xC0000005) when
+    # frozen by PyInstaller. charset_normalizer (pure Python) covers charset
+    # detection for requests/markitdown, so chardet is redundant here.
+    excludes=['chardet'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
@@ -56,24 +59,36 @@ a = Analysis(
 
 pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
 
+# onedir build: keep native libraries (cv2 / numpy / pymupdf / onnxruntime) as
+# real files next to the exe instead of packing them into a single-file archive.
+# Single-file mode extracts everything to a temp dir at startup, which can trigger
+# 0xC0000005 access-violation crashes with these heavy native deps. onedir avoids
+# that and also starts much faster (no per-launch extraction).
 exe = EXE(
     pyz,
     a.scripts,
-    a.binaries,
-    a.zipfiles,
-    a.datas,
     [],
+    exclude_binaries=True,
     name='markany-backend',
     debug=False,
     bootloader_ignore_signals=False,
     strip=False,
     upx=False,
-    upx_exclude=[],
-    runtime_tmpdir=None,
     console=True,
     disable_windowed_traceback=False,
     argv_emulation=False,
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
+)
+
+coll = COLLECT(
+    exe,
+    a.binaries,
+    a.zipfiles,
+    a.datas,
+    strip=False,
+    upx=False,
+    upx_exclude=[],
+    name='markany-backend',
 )
