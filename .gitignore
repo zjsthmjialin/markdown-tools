@@ -22,3 +22,7 @@ test_files/*_output.*
 
 # 日志与临时诊断输出
 *.log
+
+# 分发打包产物
+dist-package/
+_preview.png
