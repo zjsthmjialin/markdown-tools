@@ -35,6 +35,8 @@
 - 页间分隔改为 `---` 分隔线
 - 添加 PyInstaller `_MEIPASS` 路径检测，完善打包兼容性
 - 新增 `forceOCR` 选项支持
+- 打包改为 onedir 模式并排除 chardet，修复部分环境下安装后无法启动、后端崩溃（0xC0000005）的问题；字符集检测改用纯 Python 版 charset-normalizer
+- 清理反向转换遗留死代码，修复 Python 测试与依赖
 
 ### v1.0.2
 - 添加自适应图像增强提升扫描件 OCR 质量
@@ -45,7 +47,7 @@
 
 ## 安装
 
-下载 `MarkAny-Setup-1.0.3.exe` 运行安装即可，无需配置任何环境。安装包约 210MB（已内置 Tesseract OCR 引擎及中英文语言包）。
+下载 `MarkAny-Setup-1.0.3.exe` 运行安装即可，无需配置任何环境。安装包约 245MB（已内置 Tesseract OCR 引擎及中英文语言包）。
 
 ## 使用方法
 
