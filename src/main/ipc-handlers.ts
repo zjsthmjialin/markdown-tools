@@ -39,10 +39,17 @@ export async function startPythonService() {
     command = 'python'
     args = [path.join(pythonDir, 'main.py')]
     cwd = pythonDir
+  } else if (process.platform === 'darwin') {
+    // macOS: 使用捆绑的便携 Python 直接跑源码
+    // （PyInstaller 在 macOS 上有子进程相关问题，改用便携 Python 更稳）
+    const pythonDir = path.join(process.resourcesPath!, 'python-portable')
+    command = path.join(pythonDir, 'bin', 'python3')
+    args = [path.join(process.resourcesPath!, 'python-source', 'main.py')]
+    cwd = path.join(process.resourcesPath!, 'python-source')
   } else {
-    // In production, use the bundled PyInstaller executable
+    // Windows: 使用捆绑的 PyInstaller 可执行文件
     const backendExe = path.join(process.resourcesPath!, 'python-backend', 'markany-backend.exe')
-    // Fall back to Python script if PyInstaller bundle not found
+    // 找不到 PyInstaller 产物时回退到 Python 源码
     if (fs.existsSync(backendExe)) {
       command = backendExe
       args = []

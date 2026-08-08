@@ -12,6 +12,7 @@
 - **批量处理**：一次添加多个文件批量转换
 - **零依赖**：无需 Microsoft Office、Adobe Acrobat、或单独安装 Tesseract OCR
 - **简洁界面**：拖放操作，开箱即用
+- **跨平台**：提供 Windows（.exe）与 macOS（.dmg）两种安装包
 
 ## 支持格式
 
@@ -26,6 +27,11 @@
 | 纯文本 | .txt | 自动编码检测 |
 
 ## 更新日志
+
+### v1.0.3-mac
+- 在 v1.0.3 基础上适配 macOS：便携 Python 运行后端、绑定 macOS 版 Tesseract（含 chi_sim + eng 语言包）
+- 新增 `electron-builder` 的 `mac` 目标（dmg / arm64），Python 源码、便携 Python、Tesseract 作为 `extraResources` 打进 `.app`
+- 转换功能与 Windows v1.0.3 完全一致（共用同一套 Python 核心）
 
 ### v1.0.3
 - 重构 PDF 转 Markdown 核心转换逻辑
@@ -47,7 +53,21 @@
 
 ## 安装
 
+### Windows
+
 下载 `MarkAny-Setup-1.0.3.exe` 运行安装即可，无需配置任何环境。安装包约 245MB（已内置 Tesseract OCR 引擎及中英文语言包）。
+
+### macOS
+
+1. 下载 `MarkAny-1.0.3-mac-arm64.dmg`（Apple 芯片）
+2. 打开 DMG，将 MarkAny 拖入「应用程序」文件夹
+3. **首次打开如果提示「已损坏」或「无法验证开发者」**，在终端运行一次：
+
+   ```bash
+   sudo xattr -rd com.apple.quarantine /Applications/MarkAny.app
+   ```
+
+   然后重新打开即可。（因为应用未做 Apple 签名/公证，这是自用未签名 App 的正常提示。）
 
 ## 使用方法
 
@@ -69,7 +89,7 @@ OCR 质量取决于原始扫描件的清晰度。清晰度越高，识别效果�
 
 ## 系统要求
 
-- Windows 10/11 (64位)
+- Windows 10/11（64 位），或 macOS 12+（Apple 芯片）
 - 约 500MB 可用磁盘空间
 
 ## 联系作者

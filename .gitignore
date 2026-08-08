@@ -8,6 +8,8 @@ __pycache__/
 test_output/
 src/test_output/
 src/python/tesseract-portable/
+src/python/tesseract-portable-mac/
+src/python/portable-python/
 src/python/dist/
 src/python/build/
 src/python/*.spec.lock
@@ -26,3 +28,4 @@ test_files/*_output.*
 # 分发打包产物
 dist-package/
 _preview.png
+_mac_deliverables/

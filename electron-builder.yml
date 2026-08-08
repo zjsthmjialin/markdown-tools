@@ -12,29 +12,8 @@ files:
   - "!**/__pycache__"
   - "!**/*.pyc"
 
-extraResources:
-  # onedir PyInstaller output: copy the whole folder (exe + _internal libs) into
-  # python-backend/, so the exe still lands at python-backend/markany-backend.exe
-  - from: src/python/dist/markany-backend
-    to: python-backend
-    filter:
-      - "**/*"
-  - from: src/python/tesseract-portable
-    to: python-backend/tesseract
-    filter:
-      - "**/*"
-  - from: src/python/
-    to: python-source/
-    filter:
-      - "converters/*.py"
-      - "utils/*.py"
-      - "requirements.txt"
-      - "!**/__pycache__"
-      - "!**/*.pyc"
-      - "!dist/**"
-      - "!build/**"
-      - "!tesseract-portable/**"
-      - "!*.spec"
+# 说明：资源按平台分别声明，避免顶层 extraResources 在 mac 构建时
+# 去拷贝 Windows 专属产物（src/python/dist、tesseract-portable）而报错。
 
 win:
   target:
@@ -42,6 +21,32 @@ win:
       arch:
         - x64
   artifactName: ${productName}-Setup-${version}.${ext}
+  extraResources:
+    # onedir PyInstaller output: 整个目录（exe + _internal 依赖）拷进 python-backend/
+    - from: src/python/dist/markany-backend
+      to: python-backend
+      filter:
+        - "**/*"
+    # Windows tesseract（由 setup_tesseract.sh 生成）
+    - from: src/python/tesseract-portable
+      to: python-backend/tesseract
+      filter:
+        - "**/*"
+    # Python 源码：Windows 下作为兜底
+    - from: src/python/
+      to: python-source/
+      filter:
+        - "__init__.py"
+        - "main.py"
+        - "converters/**/*.py"
+        - "ocr/**/*.py"
+        - "utils/**/*.py"
+        - "requirements.txt"
+        - "!**/__pycache__"
+        - "!**/*.pyc"
+        - "!dist/**"
+        - "!build/**"
+        - "!*.spec"
 
 nsis:
   oneClick: false
@@ -51,5 +56,45 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
   shortcutName: MarkAny
+
+mac:
+  target:
+    - target: dmg
+      arch:
+        - arm64          # Apple 芯片
+    - target: zip
+      arch:
+        - arm64          # 分发用 zip（与 dmg 并出）
+  artifactName: ${productName}-${version}-mac-${arch}.${ext}
+  category: public.app-category.utilities
+  hardenedRuntime: false
+  entitlements: null
+  entitlementsInherit: null
+  extraResources:
+    # 便携 CPython（可重定位，已装好 requirements）——macOS 运行时
+    - from: src/python/portable-python
+      to: python-portable
+      filter:
+        - "**/*"
+    # macOS tesseract 二进制 + dylib + tessdata（由 setup_tesseract_mac.sh 生成）
+    - from: src/python/tesseract-portable-mac
+      to: python-backend/tesseract
+      filter:
+        - "**/*"
+    # Python 源码：macOS 下作为主运行体（便携 Python 直接跑 main.py）
+    - from: src/python/
+      to: python-source/
+      filter:
+        - "__init__.py"
+        - "main.py"
+        - "converters/**/*.py"
+        - "ocr/**/*.py"
+        - "utils/**/*.py"
+        - "requirements.txt"
+        - "!**/__pycache__"
+        - "!**/*.pyc"
+        - "!dist/**"
+        - "!build/**"
+        - "!*.spec"
 
 asar: true

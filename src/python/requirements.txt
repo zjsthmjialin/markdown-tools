@@ -8,4 +8,6 @@ reportlab>=4.0.0
 pytesseract>=0.3.10
 opencv-python-headless>=4.8.0
 pillow>=10.0.0
-markitdown>=0.1.0
+# markitdown 0.1.x 读取 docx/pptx/xlsx 需要对应 extra（含 mammoth 等），否则 docx 转换报
+# MissingDependencyException。带上 extra 保证便携 Python 内可正常转 Office 文档。
+markitdown[docx,pptx,xlsx]>=0.1.0

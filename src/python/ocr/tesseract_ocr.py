@@ -6,8 +6,9 @@ import io
 
 
 def _find_bundled_tesseract() -> str | None:
-    """Locate tesseract.exe bundled alongside this application.
-    支持三种部署环境：PyInstaller _MEIPASS 临时目录、frozen 可执行文件旁、开发环境。"""
+    """Locate the tesseract executable bundled alongside this application.
+    支持多种部署环境：显式环境变量、PyInstaller _MEIPASS、frozen 可执行文件旁、
+    macOS .app 内资源目录、以及开发环境。"""
     candidates = []
 
     # 0. 显式环境变量（最高优先级）
@@ -15,18 +16,28 @@ def _find_bundled_tesseract() -> str | None:
     if env_path:
         candidates.append(os.path.abspath(env_path))
 
-    # 1. PyInstaller _MEIPASS 临时释放目录（单文件模式）
+    # 1. PyInstaller _MEIPASS 临时释放目录（Windows 单文件模式）
     if hasattr(sys, '_MEIPASS'):
         candidates.append(os.path.join(sys._MEIPASS, 'tesseract', 'tesseract.exe'))
 
-    # 2. PyInstaller frozen 可执行文件所在目录（生产环境 — extraResources）
+    # 2. PyInstaller frozen 可执行文件所在目录（Windows 生产环境 — extraResources）
     if getattr(sys, 'frozen', False):
         exe_dir = os.path.dirname(sys.executable)
         candidates.append(os.path.join(exe_dir, 'tesseract', 'tesseract.exe'))
 
-    # 3. 相对于本源文件（开发环境）
+    # 3. 相对于本源文件（开发环境，Windows）
     this_dir = os.path.dirname(os.path.abspath(__file__))
     candidates.append(os.path.join(this_dir, '..', 'tesseract-portable', 'tesseract.exe'))
+
+    # 4. macOS：.app 内捆绑的 tesseract 及开发环境路径
+    #    生产：Resources/python-source/ocr → Resources/python-backend/tesseract/tesseract
+    #    开发：src/python/ocr → src/python/tesseract-portable-mac/tesseract
+    if sys.platform == 'darwin':
+        candidates.append(os.path.join(this_dir, '..', '..', 'python-backend', 'tesseract', 'tesseract'))
+        candidates.append(os.path.join(this_dir, '..', 'tesseract-portable-mac', 'tesseract'))
+        # Homebrew 兜底
+        candidates.append('/opt/homebrew/bin/tesseract')
+        candidates.append('/usr/local/bin/tesseract')
 
     for path in candidates:
         normalized = os.path.normpath(os.path.abspath(path))
@@ -38,7 +49,7 @@ def _find_bundled_tesseract() -> str | None:
 
 def _find_bundled_tessdata(tesseract_exe: str) -> str | None:
     """Find tessdata directory bundled alongside the tesseract executable.
-    支持三种部署环境查找 tessdata 语言包目录。"""
+    支持多种部署环境查找 tessdata 语言包目录。"""
     candidates = []
 
     # 0. 显式环境变量（最高优先级）
@@ -50,13 +61,18 @@ def _find_bundled_tessdata(tesseract_exe: str) -> str | None:
     if hasattr(sys, '_MEIPASS'):
         candidates.append(os.path.join(sys._MEIPASS, 'tesseract', 'tessdata'))
 
-    # 2. tesseract.exe 同级 tessdata/ 目录
+    # 2. tesseract 可执行文件同级 tessdata/ 目录（Windows 与 macOS 捆绑均适用）
     tesseract_dir = os.path.dirname(tesseract_exe)
     candidates.append(os.path.join(tesseract_dir, 'tessdata'))
 
     # 3. 上级目录中的 tessdata/（如果 tesseract 在子目录中）
     parent_dir = os.path.dirname(tesseract_dir)
     candidates.append(os.path.join(parent_dir, 'tessdata'))
+
+    # 4. macOS Homebrew 兜底 tessdata
+    if sys.platform == 'darwin':
+        candidates.append('/opt/homebrew/share/tessdata')
+        candidates.append('/usr/local/share/tessdata')
 
     for path in candidates:
         normalized = os.path.normpath(os.path.abspath(path))
