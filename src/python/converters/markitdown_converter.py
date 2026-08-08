@@ -8,7 +8,7 @@ class MarkItDownConverter(BaseConverter):
     def get_supported_extensions(self) -> list[str]:
         return MarkItDownConverter.SUPPORTED
 
-    def to_markdown(self, file_path: str, output_dir: str) -> str:
+    def to_markdown(self, file_path: str, output_dir: str, options: dict | None = None) -> str:
         md = _MarkItDown()
         result = md.convert(file_path)
         # Clean control characters (MarkItDown may still emit some)

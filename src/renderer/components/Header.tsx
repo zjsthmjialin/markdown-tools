@@ -5,7 +5,7 @@ export default function Header() {
         <div className="logo-icon">📄</div>
         <div className="logo-text">Mark<span>Any</span></div>
       </div>
-      <p className="tagline">支持 PDF、Word、Excel、PPT、HTML 等格式的双向转换工具</p>
+      <p className="tagline">将 PDF、Word、Excel、PPT、HTML 等格式转换为 Markdown</p>
     </header>
   )
 }

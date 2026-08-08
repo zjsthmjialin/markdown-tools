@@ -40,14 +40,16 @@ export async function startPythonService() {
     args = [path.join(pythonDir, 'main.py')]
     cwd = pythonDir
   } else if (process.platform === 'darwin') {
-    // On macOS, use bundled portable Python (PyInstaller has subprocess issues)
+    // macOS: 使用捆绑的便携 Python 直接跑源码
+    // （PyInstaller 在 macOS 上有子进程相关问题，改用便携 Python 更稳）
     const pythonDir = path.join(process.resourcesPath!, 'python-portable')
     command = path.join(pythonDir, 'bin', 'python3')
     args = [path.join(process.resourcesPath!, 'python-source', 'main.py')]
     cwd = path.join(process.resourcesPath!, 'python-source')
   } else {
-    // On Windows, use the bundled PyInstaller executable
+    // Windows: 使用捆绑的 PyInstaller 可执行文件
     const backendExe = path.join(process.resourcesPath!, 'python-backend', 'markany-backend.exe')
+    // 找不到 PyInstaller 产物时回退到 Python 源码
     if (fs.existsSync(backendExe)) {
       command = backendExe
       args = []
@@ -118,7 +120,7 @@ async function callPythonService(data: {
         req.destroy()
         resolve({ success: false, error: '请求超时' })
       }
-    }, 300000)
+    }, 1800000)
 
     const req = http.request(options, (res) => {
       let data = ''

@@ -13,8 +13,8 @@ def sanitize_text(text: str) -> str:
 
 class BaseConverter(ABC):
     @abstractmethod
-    def to_markdown(self, file_path: str, output_dir: str) -> str:
-        """将文件转换为 Markdown"""
+    def to_markdown(self, file_path: str, output_dir: str, options: dict | None = None) -> str:
+        """将文件转换为 Markdown。options 为转换器专属可选参数。"""
         pass
 
     @abstractmethod
