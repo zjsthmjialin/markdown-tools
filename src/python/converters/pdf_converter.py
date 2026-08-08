@@ -9,13 +9,16 @@ from PIL import Image
 
 def enhance_scan_image(pil_image: Image.Image) -> Image.Image:
     """
-    自适应图像增强，专为扫描件 OCR 预处理设计。
+    扫描件 OCR 预处理：灰度 + 去噪 + CLAHE 对比度增强。
 
     处理步骤：
     1. 转为灰度（如果是彩色图像）
     2. 自适应去噪
     3. CLAHE 自适应对比度增强
-    4. 自适应二值化
+
+    注意：此前还做过一步手工自适应二值化（adaptiveThreshold），但在不少扫描件上它会把
+    文字笔画冲碎/糊掉，导致 Tesseract 识别出乱码（原图/灰度反而识别正常）。Tesseract 5
+    (LSTM) 自带更稳健的内部二值化，直接喂清晰灰度效果更好，故移除该步。
     """
     try:
         img = np.array(pil_image)
@@ -28,15 +31,8 @@ def enhance_scan_image(pil_image: Image.Image) -> Image.Image:
         denoised = cv2.fastNlMeansDenoising(gray, h=10, templateWindowSize=7, searchWindowSize=21)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         enhanced = clahe.apply(denoised)
-        binary = cv2.adaptiveThreshold(
-            enhanced, 255,
-            cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
-            cv2.THRESH_BINARY,
-            blockSize=11,
-            C=2
-        )
 
-        return Image.fromarray(binary)
+        return Image.fromarray(enhanced)
     except Exception as e:
         print(f"[警告] 图像增强失败，使用原图: {e}")
         return pil_image
