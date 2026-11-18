@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react'
 import { SelectedFile } from '../types'
+import { UploadIcon } from './Icons'
 
 interface DropZoneProps {
   onFilesSelected: (files: File[]) => void
@@ -44,7 +45,7 @@ export default function DropZone({ onFilesSelected, onFilesSelectedViaDialog }: 
       onClick={handleClick}
     >
       <div className="drop-zone-content">
-        <div className="drop-icon">📁</div>
+        <div className="drop-icon"><UploadIcon /></div>
         <div className="drop-title">拖放文件到此处</div>
         <div className="drop-subtitle">
           或<span>点击选择文件</span> · 支持批量选择

@@ -1,3 +1,5 @@
+import { ArrowRightIcon } from './Icons'
+
 interface DirectionSelectProps {
   sourceFormat: string
   onSourceChange: (value: string) => void
@@ -20,9 +22,10 @@ export default function DirectionSelect({
   return (
     <div className="direction-section">
       <div className="direction-group">
-        <div className="direction-label">源格式</div>
+        <label className="direction-label" htmlFor="source-format">源格式</label>
         <div className="select-wrapper">
           <select
+            id="source-format"
             value={sourceFormat}
             onChange={e => onSourceChange(e.target.value)}
           >
@@ -32,14 +35,10 @@ export default function DirectionSelect({
           </select>
         </div>
       </div>
-      <div className="direction-arrow">→</div>
+      <div className="direction-arrow"><ArrowRightIcon /></div>
       <div className="direction-group">
         <div className="direction-label">目标格式</div>
-        <div className="select-wrapper">
-          <select disabled className="target-select">
-            <option value="md">Markdown</option>
-          </select>
-        </div>
+        <div className="target-chip">Markdown</div>
       </div>
     </div>
   )

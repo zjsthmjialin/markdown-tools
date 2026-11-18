@@ -18,7 +18,7 @@ function createWindow() {
     y: Math.floor((height - 700) / 2),
     frame: false,
     show: false,
-    backgroundColor: '#181818',
+    backgroundColor: '#F6F3EE',
     webPreferences: {
       preload: path.join(__dirname, '../preload/preload.js'),
       contextIsolation: true,

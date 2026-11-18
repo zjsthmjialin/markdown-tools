@@ -1,3 +1,5 @@
+import { PlayIcon } from './Icons'
+
 interface ActionBarProps {
   outputPath: string
   onBrowse: () => void
@@ -22,8 +24,9 @@ export default function ActionBar({
   return (
     <div className="action-bar">
       <div className="output-path">
-        <span className="output-label">输出:</span>
+        <label className="output-label" htmlFor="output-path">输出目录</label>
         <input
+          id="output-path"
           type="text"
           className="output-input"
           value={outputPath || '默认位置：原文件目录'}
@@ -52,7 +55,7 @@ export default function ActionBar({
           onClick={onConvert}
           disabled={disabled}
         >
-          <span>▶</span>
+          <PlayIcon />
           开始转换
         </button>
       )}

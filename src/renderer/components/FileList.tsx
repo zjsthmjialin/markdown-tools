@@ -1,21 +1,9 @@
 import { FileItem } from '../types'
+import { FileIcon, CheckIcon, CloseIcon } from './Icons'
 
 interface FileListProps {
   files: FileItem[]
   onRemove: (id: string) => void
-}
-
-const FILE_ICONS: Record<string, string> = {
-  '.pdf': '📕',
-  '.docx': '📗',
-  '.doc': '📗',
-  '.xlsx': '📘',
-  '.xls': '📘',
-  '.pptx': '📙',
-  '.ppt': '📙',
-  '.html': '🌐',
-  '.txt': '📝',
-  '.md': '📋'
 }
 
 const STATUS_TEXT = {
@@ -36,10 +24,8 @@ export default function FileList({ files, onRemove }: FileListProps) {
       </div>
       <div className="file-items">
         {files.map(file => (
-          <div key={file.id} className="file-item">
-            <div className="file-icon">
-              {FILE_ICONS[file.extension] || '📄'}
-            </div>
+          <div key={file.id} className={`file-item ${file.status === 'completed' ? 'completed' : ''}`}>
+            <div className="file-icon"><FileIcon /></div>
             <div className="file-info">
               <div className="file-name">{file.name}</div>
               <div className="file-meta">
@@ -49,15 +35,18 @@ export default function FileList({ files, onRemove }: FileListProps) {
                 <div className="file-error">{file.error}</div>
               )}
             </div>
-            <div className="file-status">
-              <span className={`status-dot ${file.status}`}></span>
+            <div className={`file-status ${file.status}`}>
+              {file.status === 'completed'
+                ? <span className="status-check"><CheckIcon /></span>
+                : <span className={`status-dot ${file.status}`}></span>}
               {STATUS_TEXT[file.status]}
             </div>
             <button
               className="file-remove"
               onClick={() => onRemove(file.id)}
+              aria-label={`移除 ${file.name}`}
             >
-              ✕
+              <CloseIcon />
             </button>
           </div>
         ))}

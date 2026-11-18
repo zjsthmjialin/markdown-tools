@@ -29,3 +29,6 @@ test_files/*_output.*
 dist-package/
 _preview.png
 _mac_deliverables/
+
+# macOS
+.DS_Store

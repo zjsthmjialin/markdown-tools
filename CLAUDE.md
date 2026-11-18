@@ -40,7 +40,7 @@ Python Backend (http.server + PyMuPDF + MarkItDown + Tesseract OCR)
 ### React Frontend (`src/renderer/`)
 
 - **App.tsx** — Root component, state management, sequential file conversion orchestration
-- Single CSS file (`App.css`), dark theme
+- Single CSS file (`App.css`), warm-paper light theme (colors as CSS variables in `:root`, accent `--accent`); icons in `components/Icons.tsx`
 - Components: TitleBar, Header, DirectionSelect, DropZone, FileList, ProgressBar, ActionBar, Tip
 
 ### Python Backend (`src/python/`)
