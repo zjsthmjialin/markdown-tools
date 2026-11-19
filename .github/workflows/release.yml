@@ -31,6 +31,7 @@ jobs:
         shell: pwsh
         run: |
           $env:PATH = "C:\Program Files\Git\bin;$env:PATH"
+          New-Item -ItemType Directory -Force src/python/tesseract-portable | Out-Null
           npm run build
       - uses: actions/upload-artifact@v4
         with:
