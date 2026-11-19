@@ -10,7 +10,8 @@ const STATUS_TEXT = {
   pending: '等待中',
   processing: '转换中',
   completed: '已完成',
-  error: '错误'
+  error: '错误',
+  cancelled: '已取消'
 }
 
 export default function FileList({ files, onRemove }: FileListProps) {

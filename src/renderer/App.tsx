@@ -16,10 +16,13 @@ function App() {
   const [outputPath, setOutputPath] = useState('')
   const [progress, setProgress] = useState(0)
   const [currentFile, setCurrentFile] = useState('')
+  const [progressDetail, setProgressDetail] = useState('')
+  const [isCancelling, setIsCancelling] = useState(false)
   const [isConverting, setIsConverting] = useState(false)
   const [elapsedTime, setElapsedTime] = useState(0)
   const convertingRef = useRef(false)
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const cancelRequestedRef = useRef(false)
 
   useEffect(() => {
     return () => {
@@ -62,10 +65,6 @@ function App() {
     setFiles(prev => [...prev, ...fileItems])
   }, [])
 
-  const handleRemoveFile = useCallback((id: string) => {
-    setFiles(prev => prev.filter(f => f.id !== id))
-  }, [])
-
   const handleBrowse = useCallback(async () => {
     if (window.electronAPI?.selectDirectory) {
       const selected = await window.electronAPI.selectDirectory()
@@ -81,6 +80,8 @@ function App() {
     if (convertingRef.current) return
     convertingRef.current = true
     setIsConverting(true)
+    cancelRequestedRef.current = false
+    setIsCancelling(false)
     setProgress(0)
     setElapsedTime(0)
     const startTime = Date.now()
@@ -88,8 +89,7 @@ function App() {
       setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
     }, 1000)
 
-    const currentFiles = files.map(f => ({ ...f, status: 'processing' as const }))
-    setFiles(currentFiles)
+    const currentFiles = files.filter(f => f.status === 'pending' || f.status === 'cancelled' || f.status === 'error')
 
     if (currentFiles.length === 0) {
       setIsConverting(false)
@@ -98,13 +98,24 @@ function App() {
       return
     }
 
-    const totalFiles = currentFiles.length
+    let completedFiles = files.filter(f => f.status === 'completed').length
+    let currentPageFraction = 0
+    const removeProgressListener = window.electronAPI?.onConversionProgress?.((detail) => {
+      setCurrentFile(detail.file)
+      setProgressDetail(detail.pageCount ? `${detail.phase}（第 ${detail.page}/${detail.pageCount} 页）` : detail.phase)
+      if (detail.pageCount) {
+        currentPageFraction = detail.page / detail.pageCount
+        setProgress(Math.min(99, Math.round(((completedFiles + currentPageFraction) / files.length) * 100)))
+      }
+    })
 
     for (let i = 0; i < currentFiles.length; i++) {
       if (!convertingRef.current) break
       const file = currentFiles[i]
+      setFiles(prev => prev.map(f => f.id === file.id ? { ...f, status: 'processing' } : f))
       setCurrentFile(file.name)
-      setProgress(Math.round((i / totalFiles) * 100))
+      setProgressDetail('正在准备转换')
+      setProgress(Math.min(99, Math.round((completedFiles / files.length) * 100)))
 
       if (window.electronAPI?.convertFile) {
         try {
@@ -115,8 +126,10 @@ function App() {
             outputPath
           )
           setFiles(prev => prev.map(f =>
-            f.id === file.id ? { ...f, status: result.success ? 'completed' : 'error', error: result.error } : f
+            f.id === file.id ? { ...f, status: result.success ? 'completed' : result.cancelled ? 'cancelled' : 'error', error: result.error } : f
           ))
+          if (result.success) completedFiles++
+          if (result.cancelled || cancelRequestedRef.current) break
         } catch (e) {
           setFiles(prev => prev.map(f =>
             f.id === file.id ? { ...f, status: 'error', error: String(e) } : f
@@ -125,26 +138,34 @@ function App() {
       }
     }
 
-    setProgress(100)
+    removeProgressListener?.()
+
+    const wasCancelled = cancelRequestedRef.current
+    setProgress(wasCancelled ? Math.min(99, Math.round(((completedFiles + currentPageFraction) / files.length) * 100)) : 100)
     setCurrentFile('')
+    setProgressDetail(wasCancelled ? '已停止；未处理的文件仍在等待' : '')
+    setIsCancelling(false)
+    cancelRequestedRef.current = false
     setIsConverting(false)
     convertingRef.current = false
     if (timerRef.current) clearInterval(timerRef.current)
     setElapsedTime(Math.floor((Date.now() - startTime) / 1000))
   }, [files, sourceFormat, outputPath])
 
-  const handleCancel = useCallback(() => {
-    convertingRef.current = false
-    if (timerRef.current) clearInterval(timerRef.current)
-    setIsConverting(false)
-    setCurrentFile('')
-    setFiles(prev => prev.map(f =>
-      f.status === 'processing' ? { ...f, status: 'pending' } : f
-    ))
+  const handleCancel = useCallback(async () => {
+    cancelRequestedRef.current = true
+    setIsCancelling(true)
+    if (window.electronAPI?.cancelConversion) await window.electronAPI.cancelConversion()
+    else convertingRef.current = false
   }, [])
 
   const handleClearCompleted = useCallback(() => {
     setFiles(prev => prev.filter(f => f.status !== 'completed'))
+  }, [])
+
+  const handleRemoveFile = useCallback((id: string) => {
+    if (convertingRef.current) return
+    setFiles(prev => prev.filter(f => f.id !== id))
   }, [])
 
   return (
@@ -158,7 +179,7 @@ function App() {
         />
         <DropZone onFilesSelected={handleFilesSelected} onFilesSelectedViaDialog={handleFilesSelectedViaDialog} />
         <FileList files={files} onRemove={handleRemoveFile} />
-        <ProgressBar progress={progress} currentFile={currentFile} elapsedTime={elapsedTime} />
+        <ProgressBar progress={progress} currentFile={currentFile} detail={isCancelling ? '正在结束当前页面…' : progressDetail} elapsedTime={elapsedTime} />
         <ActionBar
           outputPath={outputPath}
           onBrowse={handleBrowse}

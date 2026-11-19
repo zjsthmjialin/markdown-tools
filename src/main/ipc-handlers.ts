@@ -7,7 +7,7 @@ import fs from 'fs'
 let pythonProcess: ChildProcess | null = null
 
 function waitForPythonService(maxRetries = 30, interval = 1000): Promise<void> {
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
     let retries = 0
     const check = () => {
       http.get('http://127.0.0.1:8765/', (res) => {
@@ -17,7 +17,7 @@ function waitForPythonService(maxRetries = 30, interval = 1000): Promise<void> {
         retries++
         if (retries >= maxRetries) {
           console.error('[Python] Service failed to start after', maxRetries, 'retries')
-          resolve()
+          reject(new Error('转换服务启动失败，请重启程序；如仍失败请查看日志。'))
         } else {
           setTimeout(check, interval)
         }
@@ -152,13 +152,27 @@ async function callPythonService(data: {
   })
 }
 
+function requestPython(pathname: string, method = 'GET'): Promise<any> {
+  return new Promise((resolve, reject) => {
+    const req = http.request({ hostname: '127.0.0.1', port: 8765, path: pathname, method }, (res) => {
+      let body = ''
+      res.on('data', chunk => { body += chunk })
+      res.on('end', () => {
+        try { resolve(JSON.parse(body)) } catch (e) { reject(e) }
+      })
+    })
+    req.on('error', reject)
+    req.end()
+  })
+}
+
 export function setupIpcHandlers() {
   // 选择文件
   ipcMain.handle('select-files', async () => {
     const result = await dialog.showOpenDialog({
       properties: ['openFile', 'multiSelections'],
       filters: [
-        { name: 'Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'html', 'htm', 'txt', 'md'] }
+        { name: 'Documents', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'pptx', 'ppt', 'html', 'htm', 'txt'] }
       ]
     })
     if (result.canceled || result.filePaths.length === 0) return []
@@ -188,12 +202,18 @@ export function setupIpcHandlers() {
     if (outputDir) console.log(`Output dir: ${outputDir}`)
 
     try {
-      const result = await callPythonService({
-        filePath,
-        sourceFormat,
-        targetFormat,
-        outputDir
-      })
+      const progressTimer = setInterval(async () => {
+        try {
+          const state = await requestPython('/status')
+          if (state.job) _event.sender.send('conversion-progress', state.job)
+        } catch { /* Conversion request reports service errors. */ }
+      }, 500)
+      let result
+      try {
+        result = await callPythonService({ filePath, sourceFormat, targetFormat, outputDir })
+      } finally {
+        clearInterval(progressTimer)
+      }
 
       console.log(`Result: success=${result.success}, error=${result.error || 'none'}`)
       return result
@@ -201,6 +221,11 @@ export function setupIpcHandlers() {
       console.error(`Convert error:`, error)
       return { success: false, error: String(error) }
     }
+  })
+
+  ipcMain.handle('cancel-conversion', async () => {
+    try { return await requestPython('/cancel', 'POST') }
+    catch (error) { return { success: false, error: String(error) } }
   })
 
   // 窗口控制

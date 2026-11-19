@@ -4,7 +4,7 @@ export interface FileItem {
   path: string
   size: number
   extension: string
-  status: 'pending' | 'processing' | 'completed' | 'error'
+  status: 'pending' | 'processing' | 'completed' | 'error' | 'cancelled'
   error?: string
 }
 
@@ -25,7 +25,9 @@ declare global {
         sourceFormat: string,
         targetFormat: string,
         outputDir?: string
-      ) => Promise<{ success: boolean; outputPath?: string; error?: string }>
+      ) => Promise<{ success: boolean; outputPath?: string; error?: string; cancelled?: boolean }>
+      cancelConversion: () => Promise<{ success: boolean; cancelRequested?: boolean; error?: string }>
+      onConversionProgress: (callback: (progress: { file: string; page: number; pageCount: number; phase: string }) => void) => () => void
       getPathForFile: (file: File) => string
       minimize: () => Promise<void>
       maximize: () => Promise<void>

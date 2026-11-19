@@ -65,110 +65,65 @@ class PDFConverter(BaseConverter):
         doc = fitz.open(file_path)
         try:
             ocr_available = self.ocr and self.ocr.available
-            force_ocr = (options or {}).get('forceOCR', False)
-
-            if not force_ocr:
-                scanned, sparse = self._detect_pdf_type(doc)
-                if scanned:
-                    if ocr_available:
-                        return self._extract_with_ocr(file_path)
-                    else:
-                        print("[PDFConverter] Scanned PDF detected but OCR unavailable")
-                elif sparse:
-                    force_ocr = True
-
-            if force_ocr:
-                if ocr_available:
-                    return self._extract_with_ocr(file_path)
-                else:
-                    print("[PDFConverter] Sparse text PDF but OCR unavailable")
-
-            # 文字版 PDF：结构化提取
-            return self._extract_text(doc, file_path, ocr_available)
+            return self._extract_text(doc, file_path, ocr_available, options or {})
         finally:
             doc.close()
-
-    # ------------------------------------------------------------------
-    # PDF 类型检测（单次遍历）
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _detect_pdf_type(doc: fitz.Document) -> tuple[bool, bool]:
-        """单次遍历同时检测：是否扫描版 + 是否文本极度稀少。
-        Returns: (is_scanned, is_sparse)"""
-        total_pages = len(doc)
-        if total_pages == 0:
-            return False, False
-
-        image_pages = 0
-        text_pages = 0
-        total_text = 0
-
-        for page in doc:
-            text = page.get_text().strip()
-            text_len = len(text)
-            total_text += text_len
-            if text_len > 50:
-                text_pages += 1
-            if len(page.get_images(full=True)) > 0:
-                image_pages += 1
-
-        image_ratio = image_pages / total_pages
-        text_ratio = text_pages / total_pages
-        is_scanned = image_ratio > 0.3 and text_ratio < 0.3
-        is_sparse = (total_text / total_pages) < 10
-
-        return is_scanned, is_sparse
 
     # ------------------------------------------------------------------
     # 文字版 PDF：结构化提取（dict 格式，保留粗体/斜体/字号）
     # ------------------------------------------------------------------
 
-    def _extract_text(self, doc: fitz.Document, file_path: str, ocr_available: bool) -> str:
+    def _extract_text(self, doc: fitz.Document, file_path: str, ocr_available: bool,
+                      options: dict | None = None) -> str:
         """用 page.get_text('dict', flags=TEXT_PRESERVE_WHITESPACE) 提取，
         同时获取文字内容和字体信息，速度与纯文本相当。"""
         # 全局检测：整份文档的正文字号和正文字体（跨页统计，避免单页误判）
         global_body_size, global_body_font = self._detect_global_body_font(doc)
 
         markdown_content = []
-        needs_full_ocr = False
+        options = options or {}
+        force_ocr = options.get('forceOCR', False)
+        progress = options.get('progressCallback')
+        cancelled = options.get('isCancelled', lambda: False)
+        warnings = []
 
         for page_num, page in enumerate(doc, 1):
+            if cancelled():
+                raise RuntimeError('转换已取消')
+            if progress:
+                progress(page_num, len(doc), '正在分析 PDF 页面')
             page_dict = page.get_text("dict", flags=fitz.TEXT_PRESERVE_WHITESPACE)
             blocks = page_dict.get("blocks", [])
+            page_md = sanitize_text(self._dict_page_to_markdown(blocks, global_body_size, global_body_font))
+            garbled = self._text_looks_garbled(page_md)
+            has_images = bool(page.get_images(full=True))
+            sparse = len(page_md.strip()) < 20
+            should_ocr = force_ocr or garbled or (sparse and has_images) or (not page_md.strip() and has_images)
 
-            has_text = any(b.get("type") == 0 for b in blocks)
-            if not has_text:
-                continue
+            if should_ocr and ocr_available:
+                try:
+                    ocr_text = self._ocr_page(page)
+                    if ocr_text:
+                        page_md = ocr_text
+                    elif not page_md.strip():
+                        warnings.append(f'第 {page_num} 页 OCR 未识别到文字')
+                except Exception as e:
+                    warnings.append(f'第 {page_num} 页 OCR 失败：{e}')
+            elif should_ocr and not ocr_available and not page_md.strip():
+                warnings.append(f'第 {page_num} 页为扫描内容，但 OCR 不可用')
 
-            # 用全局正文字号和字体转换
-            page_md = self._dict_page_to_markdown(blocks, global_body_size, global_body_font)
-
-            if not page_md:
-                continue
-
-            cleaned = sanitize_text(page_md)
-            if not cleaned:
-                continue
-
-            if self._text_looks_garbled(cleaned):
-                if ocr_available:
-                    needs_full_ocr = True
-                    break
-                else:
-                    markdown_content.append('---')
-                    markdown_content.append(cleaned)
-            else:
-                markdown_content.append('---')
-                markdown_content.append(cleaned)
-
-        if needs_full_ocr:
-            return self._extract_with_ocr(file_path)
+            if page_md.strip():
+                markdown_content.extend(['---', page_md])
 
         if not markdown_content:
-            return f"[No extractable text content found in: {file_path}]"
+            if warnings:
+                raise RuntimeError('；'.join(warnings))
+            raise RuntimeError('PDF 中没有可提取的文字内容')
 
-        return '\n\n'.join(markdown_content)
+        result = '\n\n'.join(markdown_content)
+        if warnings:
+            result += '\n\n> 转换提示：' + '；'.join(warnings)
+        return result
 
     @staticmethod
     def _detect_body_font_size(blocks: list) -> float:
@@ -358,40 +313,17 @@ class PDFConverter(BaseConverter):
     # 全文档 OCR 流
     # ------------------------------------------------------------------
 
-    def _extract_with_ocr(self, file_path: str) -> str:
+    def _ocr_page(self, page) -> str:
         ocr = self.ocr
         if not ocr:
-            return f"[OCR unavailable — scanned PDF cannot be converted: {file_path}]"
+            raise RuntimeError('OCR 不可用')
         if not ocr.available:
-            return f"[Tesseract OCR not functional. Check language data (eng, chi_sim). File: {file_path}]"
-
-        markdown_content = []
-        doc = fitz.open(file_path)
-        try:
-            for page_num, page in enumerate(doc, 1):
-                pix = page.get_pixmap(dpi=300)
-                img_bytes = pix.tobytes('png')
-                try:
-                    pil_img = enhance_scan_image(Image.open(io.BytesIO(img_bytes)))
-                    buf = io.BytesIO()
-                    pil_img.save(buf, format='PNG')
-                    text = ocr.extract_text_from_image(buf.getvalue())
-                except Exception as e:
-                    markdown_content.append('---')
-                    markdown_content.append(f"[OCR error on this page: {e}]")
-                    continue
-                if text.strip():
-                    cleaned = sanitize_text(text.strip())
-                    if cleaned:
-                        markdown_content.append('---')
-                        markdown_content.append(cleaned)
-
-            if not markdown_content:
-                return f"[OCR produced no text for: {file_path}]"
-
-            return '\n\n'.join(markdown_content)
-        finally:
-            doc.close()
+            raise RuntimeError('Tesseract 或语言数据不可用')
+        pix = page.get_pixmap(dpi=300)
+        pil_img = enhance_scan_image(Image.open(io.BytesIO(pix.tobytes('png'))))
+        buf = io.BytesIO()
+        pil_img.save(buf, format='PNG')
+        return sanitize_text(ocr.extract_text_from_image(buf.getvalue()).strip())
 
     # ------------------------------------------------------------------
     # 辅助检测方法

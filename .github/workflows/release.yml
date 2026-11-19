@@ -77,7 +77,13 @@ jobs:
           GH_REPO: ${{ github.repository }}
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          NOTES_FILE="docs/releases/${RELEASE_TAG}.md"
+          if [ -f "$NOTES_FILE" ]; then
+            NOTES_ARGS=(--notes-file "$NOTES_FILE")
+          else
+            NOTES_ARGS=(--notes "MarkAny $RELEASE_TAG：Windows 与 macOS（Apple 芯片）桌面安装包。")
+          fi
           gh release create "$RELEASE_TAG" \
             installers/windows/* installers/macos/* \
             --title "MarkAny $RELEASE_TAG" \
-            --notes "MarkAny $RELEASE_TAG：Windows 与 macOS（Apple 芯片）桌面安装包。界面更新为暖纸色亮色主题；两个平台从同一代码仓库构建。"
+            "${NOTES_ARGS[@]}"

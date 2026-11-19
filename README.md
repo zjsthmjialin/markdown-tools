@@ -23,16 +23,16 @@
 
 <div align="center">
 
-[![下载 Windows 版](https://img.shields.io/badge/下载-Windows%20安装包-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.0.exe)
+[![下载 Windows 版](https://img.shields.io/badge/下载-Windows%20安装包-0078D6?style=for-the-badge&logo=windows&logoColor=white)](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.1.exe)
 &nbsp;&nbsp;
-[![下载 macOS 版](https://img.shields.io/badge/下载-macOS%20安装包-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.0-mac-arm64.dmg)
+[![下载 macOS 版](https://img.shields.io/badge/下载-macOS%20安装包-000000?style=for-the-badge&logo=apple&logoColor=white)](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.1-mac-arm64.dmg)
 
 </div>
 
 | 操作系统 | 安装包 | 说明 |
 |:---|:---|:---|
-| **Windows** 10 / 11（64 位） | [`MarkAny-Setup-1.1.0.exe`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.0.exe) | 双击安装，已内置 OCR 引擎 |
-| **macOS** 12+（Apple 芯片 / arm64） | [`MarkAny-1.1.0-mac-arm64.dmg`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.0-mac-arm64.dmg) | 拖入「应用程序」即可，已内置 OCR 引擎 |
+| **Windows** 10 / 11（64 位） | [`MarkAny-Setup-1.1.1.exe`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.1.exe) | 双击安装，已内置 OCR 引擎 |
+| **macOS** 12+（Apple 芯片 / arm64） | [`MarkAny-1.1.1-mac-arm64.dmg`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.1-mac-arm64.dmg) | 拖入「应用程序」即可，已内置 OCR 引擎 |
 
 > Windows 与 macOS 为各自独立的安装包，均已内置 Tesseract OCR 引擎及中英文语言包，下载后直接安装、无需任何额外配置。完整历史版本见 **[Releases 页面](https://github.com/zjsthmjialin/markdown-tools/releases)**。
 
@@ -70,11 +70,11 @@
 
 ### Windows
 
-下载 [`MarkAny-Setup-1.1.0.exe`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.0.exe) 运行安装即可，无需配置任何环境。安装包已内置 Tesseract OCR 引擎及中英文语言包。
+下载 [`MarkAny-Setup-1.1.1.exe`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-Setup-1.1.1.exe) 运行安装即可，无需配置任何环境。安装包已内置 Tesseract OCR 引擎及中英文语言包。
 
 ### macOS
 
-1. 下载 [`MarkAny-1.1.0-mac-arm64.dmg`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.0-mac-arm64.dmg)（Apple 芯片）
+1. 下载 [`MarkAny-1.1.1-mac-arm64.dmg`](https://github.com/zjsthmjialin/markdown-tools/releases/latest/download/MarkAny-1.1.1-mac-arm64.dmg)（Apple 芯片）
 2. 打开 DMG，将 **MarkAny** 拖入「应用程序」文件夹
 3. 首次打开如提示「已损坏」或「无法验证开发者」，在终端执行一次：
 
@@ -122,6 +122,12 @@
 ---
 
 ## 更新日志
+
+### v1.1.1
+- 修复同名 Markdown 输出覆盖，重复转换会自动另存为新文件
+- 混合扫描/文本 PDF 按页 OCR，转换过程中显示页级进度并支持取消
+- 将提取的图片放入对应文档的独立资源目录
+- 校验源格式选择，改善转换服务启动失败提示与 macOS 窗口行为
 
 ### v1.1.0
 - 界面更新为暖纸色亮色主题，优化文件列表、操作栏、格式选择与拖放区域

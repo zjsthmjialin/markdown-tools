@@ -44,13 +44,21 @@ function createWindow() {
 
 app.whenReady().then(async () => {
   setupIpcHandlers()
-  await startPythonService()
-  createWindow()
+  try {
+    await startPythonService()
+    createWindow()
+  } catch (error) {
+    const { dialog } = await import('electron')
+    dialog.showErrorBox('MarkAny 启动失败', String(error))
+    app.quit()
+  }
 })
 
 app.on('window-all-closed', () => {
-  stopPythonService()
-  app.quit()
+  if (process.platform !== 'darwin') {
+    stopPythonService()
+    app.quit()
+  }
 })
 
 app.on('activate', () => {
