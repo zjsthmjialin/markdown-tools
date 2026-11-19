@@ -6,7 +6,7 @@ MarkAny 是一款简洁高效的桌面应用，将 PDF、Word、Excel、PowerPoi
 
 ## 安装
 
-双击运行 `MarkAny-Setup-1.0.3.exe`，按照提示完成安装。
+双击运行 `MarkAny-Setup-1.1.0.exe`，按照提示完成安装。
 
 > 安装过程中如遇到 Windows SmartScreen 提示"Windows 已保护你的电脑"，点击"更多信息" → "仍要运行"即可。
 

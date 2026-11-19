@@ -1,0 +1,81 @@
+name: Build and publish desktop installers
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install Tesseract OCR
+        run: choco install tesseract --yes --no-progress
+      - name: Install Python build dependencies
+        run: |
+          python -m pip install --upgrade pip pyinstaller
+          python -m pip install -r src/python/requirements.txt
+      - run: npm ci
+      - name: Build Windows installer
+        shell: pwsh
+        run: |
+          $env:PATH = "C:\Program Files\Git\bin;$env:PATH"
+          npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: windows-installer
+          path: release/MarkAny-Setup-*.exe
+          if-no-files-found: error
+
+  macos:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - name: Install OCR build dependencies
+        run: brew install tesseract tesseract-lang dylibbundler
+      - run: npm ci
+      - name: Build Apple Silicon macOS installer
+        run: npm run build:mac
+      - uses: actions/upload-artifact@v4
+        with:
+          name: macos-installer
+          path: release/MarkAny-*-mac-arm64.dmg
+          if-no-files-found: error
+
+  release:
+    needs: [windows, macos]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: windows-installer
+          path: installers/windows
+      - uses: actions/download-artifact@v4
+        with:
+          name: macos-installer
+          path: installers/macos
+      - name: Create GitHub Release and upload installers
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          gh release create "$RELEASE_TAG" \
+            installers/windows/* installers/macos/* \
+            --title "MarkAny $RELEASE_TAG" \
+            --notes "MarkAny $RELEASE_TAG：Windows 与 macOS（Apple 芯片）桌面安装包。界面更新为暖纸色亮色主题；两个平台从同一代码仓库构建。"
