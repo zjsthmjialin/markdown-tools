@@ -13,8 +13,9 @@ ARCH="${ARCH:-aarch64}"          # aarch64 = Apple 芯片；Intel Mac 设 ARCH=x
 PY_SERIES="${PY_SERIES:-3.12}"   # CPython 主版本系列
 
 echo "==> 解析 python-build-standalone 最新可用构建（$PY_SERIES, ${ARCH}-apple-darwin, install_only）"
-URL="$(curl -fsSL https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest 2>/dev/null \
-  | python3 -c "
+API_JSON="$(curl --retry 5 --retry-all-errors --retry-delay 2 -fsSL \
+  https://api.github.com/repos/astral-sh/python-build-standalone/releases/latest 2>/dev/null || true)"
+URL="$(printf '%s' "$API_JSON" | python3 -c "
 import sys, json, re
 try:
     d = json.load(sys.stdin)
@@ -35,7 +36,7 @@ echo "==> 清理 $DEST_DIR"
 rm -rf "$DEST_DIR"; mkdir -p "$DEST_DIR"
 
 TMP_TGZ="$SCRIPT_DIR/_pbs_download.tar.gz"
-curl -fL "$URL" -o "$TMP_TGZ"
+curl --retry 5 --retry-all-errors --retry-delay 2 -fL "$URL" -o "$TMP_TGZ"
 
 echo "==> 解压（install_only 包顶层为 python/，strip 掉一层）"
 tar -xzf "$TMP_TGZ" -C "$DEST_DIR" --strip-components=1
