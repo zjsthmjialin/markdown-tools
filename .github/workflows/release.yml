@@ -33,7 +33,7 @@ jobs:
           $env:PATH = "C:\Program Files\Git\bin;$env:PATH"
           New-Item -ItemType Directory -Force src/python/tesseract-portable | Out-Null
           New-Item -ItemType Directory -Force src/python/tesseract-portable/tessdata | Out-Null
-          npm run build
+          npm run build -- --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: windows-installer
@@ -52,7 +52,7 @@ jobs:
         run: brew install tesseract tesseract-lang dylibbundler
       - run: npm ci
       - name: Build Apple Silicon macOS installer
-        run: npm run build:mac
+        run: npm run build:mac -- --publish never
       - uses: actions/upload-artifact@v4
         with:
           name: macos-installer
